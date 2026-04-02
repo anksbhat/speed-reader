@@ -196,11 +196,19 @@
   .controls-bar {
     background: var(--surface);
     border-top: 1px solid var(--border);
-    padding: 16px 24px;
+    padding: 12px 20px;
     display: flex;
     align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
+    gap: 14px;
+    flex-shrink: 0;
+  }
+
+  /* On desktop, row1 and row2 contents are inline (row2 hidden as a wrapper) */
+  .controls-row1 {
+    display: contents; /* children participate in bar's flex directly */
+  }
+  .controls-row2 {
+    display: contents;
   }
 
   .ctrl-group {
@@ -289,6 +297,9 @@
     color: var(--accent);
     border-color: var(--accent);
   }
+
+  /* ── MOBILE CONTROLS ROW 2 ── */
+  .controls-row2 { display: none; }
 
   /* ── SETTINGS PANEL ── */
   .settings-panel {
@@ -389,10 +400,40 @@
     display: none;
   }
 
+  /* ── MOBILE ── */
   @media (max-width: 600px) {
-    .controls-bar { padding: 10px 12px; gap: 10px; }
-    input[type="range"] { width: 80px; }
+    .controls-bar {
+      flex-direction: column;
+      padding: 10px 12px;
+      gap: 8px;
+      align-items: stretch;
+    }
+
+    /* Each row becomes a real flex row */
+    .controls-row1 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .controls-row2 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .sep { display: none; }
+    .ml-auto { margin-left: auto; }
+
+    /* Bigger touch targets */
+    .btn { padding: 10px 12px; font-size: 0.78rem; min-height: 42px; }
+    .btn.icon { padding: 10px 14px; font-size: 1.1rem; }
+    .btn.primary { min-width: 68px; }
+
+    input[type="range"] { flex: 1; max-width: 130px; }
+
+    .status-pill { margin-left: auto; }
+    .wpm-display { font-size: 1.3rem; min-width: 44px; }
   }
 </style>
 </head>
@@ -431,33 +472,37 @@
   </div>
 
   <div class="controls-bar">
-    <!-- Play/Pause -->
-    <div class="ctrl-group">
-      <button class="btn icon" id="restart-btn" title="Restart">⏮</button>
-      <button class="btn primary" id="play-btn">PLAY</button>
-      <button class="btn icon" id="skip-back-btn" title="-10 words">⏪</button>
-      <button class="btn icon" id="skip-fwd-btn" title="+10 words">⏩</button>
+    <!-- ROW 1: Transport + WPM -->
+    <div class="controls-row1">
+      <!-- Transport -->
+      <div class="ctrl-group">
+        <button class="btn icon" id="restart-btn" title="Restart">⏮</button>
+        <button class="btn primary" id="play-btn">PLAY</button>
+        <button class="btn icon" id="skip-back-btn" title="-10 words">⏪</button>
+        <button class="btn icon" id="skip-fwd-btn" title="+10 words">⏩</button>
+      </div>
+
+      <div class="sep"></div>
+
+      <!-- WPM -->
+      <div class="ctrl-group">
+        <span class="ctrl-label">WPM</span>
+        <button class="btn icon" id="wpm-dec">−</button>
+        <div class="wpm-display" id="wpm-display">300</div>
+        <button class="btn icon" id="wpm-inc">+</button>
+      </div>
     </div>
 
-    <div class="sep"></div>
-
-    <!-- WPM -->
-    <div class="ctrl-group">
-      <span class="ctrl-label">WPM</span>
-      <button class="btn icon" id="wpm-dec">−</button>
-      <div class="wpm-display" id="wpm-display">300</div>
-      <button class="btn icon" id="wpm-inc">+</button>
-      <input type="range" id="wpm-slider" min="50" max="1000" step="25" value="300" />
+    <!-- ROW 2: Slider + Status + Settings + Close -->
+    <div class="controls-row2">
+      <input type="range" id="wpm-slider" min="50" max="1000" step="25" value="300" style="flex:1;max-width:160px;" />
+      <div class="status-pill" id="status-pill">PAUSED</div>
+      <div class="ctrl-group ml-auto">
+        <button class="btn" id="settings-btn">⚙ SETTINGS</button>
+        <button class="btn" id="close-btn">✕ CLOSE</button>
+      </div>
     </div>
 
-    <div class="sep"></div>
-
-    <div class="status-pill" id="status-pill">PAUSED</div>
-
-    <div class="ctrl-group ml-auto">
-      <button class="btn" id="settings-btn">⚙ SETTINGS</button>
-      <button class="btn" id="close-btn">✕ CLOSE</button>
-    </div>
   </div>
 </div>
 
