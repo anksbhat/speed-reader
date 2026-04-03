@@ -1,524 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>FlowRead — Speed Reader</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap');
 
-  :root {
-    --bg: #0a0a0a;
-    --surface: #111111;
-    --surface2: #1a1a1a;
-    --border: #2a2a2a;
-    --text: #f0f0f0;
-    --text-muted: #555;
-    --accent: #e8ff47;
-    --accent2: #ff6b35;
-    --word-color: #ffffff;
-    --focus-color: #e8ff47;
-    --radius: 4px;
-    --transition: 0.2s ease;
-  }
+:root {
+  --bg:#0a0a0a; --surface:#111; --surface2:#1a1a1a; --border:#2a2a2a;
+  --text:#f0f0f0; --text-muted:#555; --accent:#e8ff47; --accent2:#ff6b35;
+  --word-color:#fff; --focus-color:#e8ff47; --radius:4px; --t:.2s ease;
+  --sidebar:320px;
+}
+[data-theme="light"] {
+  --bg:#f5f2eb; --surface:#ede9df; --surface2:#e0dbd0; --border:#ccc8be;
+  --text:#1a1a1a; --text-muted:#888; --accent:#1a1a1a; --accent2:#c94f1a;
+  --word-color:#0a0a0a; --focus-color:#c94f1a;
+}
 
-  [data-theme="light"] {
-    --bg: #f5f2eb;
-    --surface: #ede9df;
-    --surface2: #e0dbd0;
-    --border: #ccc8be;
-    --text: #1a1a1a;
-    --text-muted: #888;
-    --accent: #1a1a1a;
-    --accent2: #c94f1a;
-    --word-color: #0a0a0a;
-    --focus-color: #c94f1a;
-  }
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);transition:background var(--t),color var(--t);overflow:hidden;}
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+.screen{display:none;width:100%;height:100vh;}
+.screen.active{display:flex;}
 
-  html, body {
-    height: 100%;
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    transition: background var(--transition), color var(--transition);
-    overflow: hidden;
-  }
+/* ── UPLOAD ── */
+#upload-screen{flex-direction:column;align-items:center;justify-content:center;gap:36px;padding:40px;position:relative;}
+.bg-grid{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:40px 40px;opacity:.3;pointer-events:none;}
+.logo{font-family:'Bebas Neue',cursive;font-size:clamp(2.5rem,6vw,5rem);letter-spacing:.08em;color:var(--text);position:relative;z-index:1;}
+.logo span{color:var(--accent);}
+.tagline{font-family:'Space Mono',monospace;font-size:.75rem;color:var(--text-muted);letter-spacing:.2em;text-transform:uppercase;margin-top:-28px;z-index:1;}
+.drop-zone{width:min(480px,90vw);border:2px dashed var(--border);border-radius:8px;padding:56px 40px;text-align:center;cursor:pointer;transition:border-color var(--t),background var(--t);position:relative;z-index:1;background:var(--surface);}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:var(--surface2);}
+.drop-icon{font-size:3rem;margin-bottom:16px;display:block;}
+.drop-zone h2{font-size:1.1rem;font-weight:500;margin-bottom:8px;}
+.drop-zone p{font-size:.8rem;color:var(--text-muted);font-family:'Space Mono',monospace;}
+#file-input{display:none;}
 
-  /* ── SCREENS ── */
-  .screen { display: none; width: 100%; height: 100vh; }
-  .screen.active { display: flex; }
+/* ── TOP-RIGHT TOOLBAR ── */
+.top-toolbar{position:fixed;top:14px;right:14px;z-index:200;display:flex;align-items:center;gap:8px;}
+.toolbar-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:50%;width:38px;height:38px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:background var(--t),border-color var(--t);flex-shrink:0;}
+.toolbar-btn:hover{background:var(--surface2);border-color:var(--accent);}
 
-  /* ── UPLOAD SCREEN ── */
-  #upload-screen {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 40px;
-    padding: 40px;
-    position: relative;
-  }
+/* ── SETTINGS PANEL ── */
+.settings-panel{position:fixed;top:60px;right:14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;width:240px;display:none;flex-direction:column;gap:14px;z-index:190;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+.settings-panel.open{display:flex;}
+.settings-title{font-family:'Bebas Neue',cursive;font-size:1.1rem;letter-spacing:.08em;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:10px;}
+.setting-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.setting-row label:first-child{font-family:'Space Mono',monospace;font-size:.65rem;color:var(--text-muted);letter-spacing:.08em;}
+.toggle-switch{position:relative;width:36px;height:20px;flex-shrink:0;}
+.toggle-switch input{display:none;}
+.toggle-switch .slider{position:absolute;inset:0;background:var(--surface2);border:1px solid var(--border);border-radius:20px;cursor:pointer;transition:background var(--t);}
+.toggle-switch .slider:before{content:'';position:absolute;width:12px;height:12px;left:3px;top:3px;background:var(--text-muted);border-radius:50%;transition:transform var(--t),background var(--t);}
+.toggle-switch input:checked+.slider{background:var(--accent);border-color:var(--accent);}
+.toggle-switch input:checked+.slider:before{transform:translateX(16px);background:var(--bg);}
+.setting-select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px 8px;font-family:'Space Mono',monospace;font-size:.65rem;border-radius:4px;cursor:pointer;}
 
-  .bg-grid {
-    position: absolute; inset: 0;
-    background-image: linear-gradient(var(--border) 1px, transparent 1px),
-                      linear-gradient(90deg, var(--border) 1px, transparent 1px);
-    background-size: 40px 40px;
-    opacity: 0.3;
-    pointer-events: none;
-  }
+/* ── READER SCREEN ── */
+#reader-screen{flex-direction:column;background:var(--bg);}
+.reader-body{flex:1;display:flex;overflow:hidden;min-height:0;}
 
-  .logo {
-    font-family: 'Bebas Neue', cursive;
-    font-size: clamp(2.5rem, 6vw, 5rem);
-    letter-spacing: 0.08em;
-    color: var(--text);
-    position: relative;
-    z-index: 1;
-  }
-  .logo span { color: var(--accent); }
+/* ── SIDEBAR ── */
+.book-sidebar{width:var(--sidebar);flex-shrink:0;border-right:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;overflow:hidden;transition:width var(--t),min-width var(--t);}
+.book-sidebar.collapsed{width:0 !important;min-width:0;border-right:none;}
+.sidebar-header{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px;}
+.sidebar-title{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.sidebar-hint{font-family:'Space Mono',monospace;font-size:.52rem;color:var(--accent);letter-spacing:.04em;background:rgba(232,255,71,.08);padding:2px 7px;border-radius:10px;border:1px solid rgba(232,255,71,.2);white-space:nowrap;flex-shrink:0;}
+[data-theme="light"] .sidebar-hint{color:var(--accent2);background:rgba(201,79,26,.08);border-color:rgba(201,79,26,.2);}
+.book-pages{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px;}
+.book-pages::-webkit-scrollbar{width:4px;}
+.book-pages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 
-  .tagline {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    margin-top: -30px;
-    z-index: 1;
-  }
+/* PDF page */
+.page-wrap{position:relative;border:1px solid var(--border);border-radius:4px;overflow:hidden;background:#1c1c1c;flex-shrink:0;cursor:text;}
+[data-theme="light"] .page-wrap{background:#fff;}
+.page-wrap canvas{display:block;width:100%;height:auto;}
+.page-label{font-family:'Space Mono',monospace;font-size:.52rem;color:var(--text-muted);text-align:center;padding:4px 0;background:var(--surface2);letter-spacing:.08em;}
 
-  .drop-zone {
-    width: min(480px, 90vw);
-    border: 2px dashed var(--border);
-    border-radius: 8px;
-    padding: 60px 40px;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color var(--transition), background var(--transition);
-    position: relative;
-    z-index: 1;
-    background: var(--surface);
-  }
-  .drop-zone:hover, .drop-zone.drag-over {
-    border-color: var(--accent);
-    background: var(--surface2);
-  }
-  .drop-icon {
-    font-size: 3rem;
-    margin-bottom: 16px;
-    display: block;
-  }
-  .drop-zone h2 {
-    font-size: 1.1rem;
-    font-weight: 500;
-    margin-bottom: 8px;
-  }
-  .drop-zone p {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    font-family: 'Space Mono', monospace;
-  }
-  #file-input { display: none; }
+/* EPUB text */
+.epub-text{font-family:'DM Sans',sans-serif;font-size:.82rem;line-height:1.75;color:var(--text);cursor:text;user-select:text;padding:12px 14px;}
+.epub-text p{margin-bottom:.75em;}
+.epub-text p:last-child{margin-bottom:0;}
 
-  .theme-toggle {
-    position: fixed;
-    top: 20px; right: 20px;
-    z-index: 100;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: 50%;
-    width: 40px; height: 40px;
-    cursor: pointer;
-    font-size: 1.1rem;
-    display: flex; align-items: center; justify-content: center;
-    transition: background var(--transition), border-color var(--transition);
-  }
-  .theme-toggle:hover { background: var(--surface2); border-color: var(--accent); }
+/* Jump tooltip */
+.jump-tooltip{position:fixed;z-index:300;background:var(--accent);color:var(--bg);font-family:'Space Mono',monospace;font-size:.65rem;font-weight:700;letter-spacing:.06em;padding:7px 14px;border-radius:4px;cursor:pointer;display:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.5);transform:translateX(-50%);}
+.jump-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--accent);}
+.jump-tooltip:hover{opacity:.9;}
 
-  /* ── READER SCREEN ── */
-  #reader-screen {
-    flex-direction: column;
-    background: var(--bg);
-  }
+/* ── WORD AREA ── */
+.reader-word-area{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;padding:20px;position:relative;cursor:pointer;min-width:0;}
+.progress-bar-wrap{position:absolute;top:0;left:0;right:0;height:2px;background:var(--border);}
+.progress-bar{height:100%;background:var(--accent);width:0%;transition:width .1s linear;}
+#display-word{font-family:'Bebas Neue',cursive;font-size:clamp(3.5rem,10vw,9rem);color:var(--word-color);letter-spacing:.04em;text-align:center;user-select:none;line-height:1;}
+#display-word .focus-letter{color:var(--focus-color);}
+.word-counter{font-family:'Space Mono',monospace;font-size:.65rem;color:var(--text-muted);letter-spacing:.15em;}
+.overlay-msg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;pointer-events:none;opacity:0;transition:opacity .3s;}
+.overlay-msg.visible{opacity:1;}
+.overlay-msg span{font-family:'Bebas Neue',cursive;font-size:1.4rem;color:var(--text-muted);letter-spacing:.1em;}
+.overlay-msg small{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text-muted);letter-spacing:.12em;}
 
-  .reader-word-area {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 20px;
-    padding: 20px;
-    position: relative;
-    cursor: pointer;
-  }
+/* ── CONTROLS BAR ── */
+.controls-bar{background:var(--surface);border-top:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
+.controls-row1{display:contents;}
+.controls-row2{display:contents;}
+.ctrl-group{display:flex;align-items:center;gap:6px;}
+.ctrl-label{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;}
+.btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:7px 14px;font-family:'Space Mono',monospace;font-size:.72rem;cursor:pointer;letter-spacing:.05em;transition:background var(--t),border-color var(--t),color var(--t);white-space:nowrap;}
+.btn:hover{background:var(--border);border-color:var(--accent);}
+.btn.primary{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:700;min-width:76px;}
+.btn.primary:hover{opacity:.85;}
+.btn.icon{padding:7px 10px;font-size:.95rem;}
+.wpm-display{font-family:'Bebas Neue',cursive;font-size:1.5rem;color:var(--accent);min-width:50px;text-align:center;}
+input[type="range"]{-webkit-appearance:none;width:110px;height:3px;background:var(--border);border-radius:2px;outline:none;}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--accent);cursor:pointer;}
+.sep{width:1px;height:22px;background:var(--border);flex-shrink:0;}
+.ml-auto{margin-left:auto;}
+.status-pill{font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;padding:3px 9px;border-radius:20px;border:1px solid var(--border);color:var(--text-muted);}
+.status-pill.playing{color:var(--accent);border-color:var(--accent);}
 
-  .progress-bar-wrap {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: var(--border);
-  }
-  .progress-bar {
-    height: 100%;
-    background: var(--accent);
-    width: 0%;
-    transition: width 0.1s linear;
-  }
+/* ── ERROR TOAST ── */
+.error-toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#ff4444;color:#fff;padding:9px 18px;border-radius:var(--radius);font-family:'Space Mono',monospace;font-size:.72rem;z-index:400;display:none;}
 
-  #display-word {
-    font-family: 'Bebas Neue', cursive;
-    font-size: clamp(4rem, 12vw, 10rem);
-    color: var(--word-color);
-    letter-spacing: 0.04em;
-    text-align: center;
-    user-select: none;
-    transition: opacity 0.05s;
-    line-height: 1;
-    position: relative;
-  }
-
-  #display-word .focus-letter {
-    color: var(--focus-color);
-  }
-
-  .word-counter {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    letter-spacing: 0.15em;
-  }
-
-  /* ── CONTROLS BAR ── */
-  .controls-bar {
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    flex-shrink: 0;
-  }
-
-  /* On desktop, row1 and row2 contents are inline (row2 hidden as a wrapper) */
-  .controls-row1 {
-    display: contents; /* children participate in bar's flex directly */
-  }
-  .controls-row2 {
-    display: contents;
-  }
-
-  .ctrl-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .ctrl-label {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.65rem;
-    color: var(--text-muted);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-
-  .btn {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: var(--radius);
-    padding: 8px 16px;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.75rem;
-    cursor: pointer;
-    letter-spacing: 0.05em;
-    transition: background var(--transition), border-color var(--transition), color var(--transition);
-    white-space: nowrap;
-  }
-  .btn:hover { background: var(--border); border-color: var(--accent); }
-  .btn.primary {
-    background: var(--accent);
-    color: var(--bg);
-    border-color: var(--accent);
-    font-weight: 700;
-    min-width: 80px;
-  }
-  .btn.primary:hover { opacity: 0.85; }
-  .btn.icon { padding: 8px 10px; font-size: 1rem; }
-
-  .wpm-display {
-    font-family: 'Bebas Neue', cursive;
-    font-size: 1.6rem;
-    color: var(--accent);
-    min-width: 52px;
-    text-align: center;
-  }
-
-  input[type="range"] {
-    -webkit-appearance: none;
-    width: 120px;
-    height: 3px;
-    background: var(--border);
-    border-radius: 2px;
-    outline: none;
-  }
-  input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 14px; height: 14px;
-    border-radius: 50%;
-    background: var(--accent);
-    cursor: pointer;
-  }
-
-  .sep {
-    width: 1px; height: 24px;
-    background: var(--border);
-    flex-shrink: 0;
-  }
-
-  .ml-auto { margin-left: auto; }
-
-  /* ── STATUS PILL ── */
-  .status-pill {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.6rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    padding: 3px 10px;
-    border-radius: 20px;
-    border: 1px solid var(--border);
-    color: var(--text-muted);
-  }
-  .status-pill.playing {
-    color: var(--accent);
-    border-color: var(--accent);
-  }
-
-  /* ── MOBILE CONTROLS ROW 2 ── */
-  .controls-row2 { display: none; }
-
-  /* ── SETTINGS PANEL ── */
-  .settings-panel {
-    position: fixed;
-    bottom: 80px; right: 24px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 20px;
-    width: 260px;
-    display: none;
-    flex-direction: column;
-    gap: 16px;
-    z-index: 50;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-  }
-  .settings-panel.open { display: flex; }
-
-  .setting-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-  }
-  .setting-row label {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    letter-spacing: 0.1em;
-  }
-
-  .toggle-switch {
-    position: relative; width: 36px; height: 20px;
-  }
-  .toggle-switch input { display: none; }
-  .toggle-switch .slider {
-    position: absolute; inset: 0;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    cursor: pointer;
-    transition: background var(--transition);
-  }
-  .toggle-switch .slider:before {
-    content: '';
-    position: absolute;
-    width: 12px; height: 12px;
-    left: 3px; top: 3px;
-    background: var(--text-muted);
-    border-radius: 50%;
-    transition: transform var(--transition), background var(--transition);
-  }
-  .toggle-switch input:checked + .slider { background: var(--accent); border-color: var(--accent); }
-  .toggle-switch input:checked + .slider:before {
-    transform: translateX(16px);
-    background: var(--bg);
-  }
-
-  /* ── OVERLAY ── */
-  .overlay-msg {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-  .overlay-msg.visible { opacity: 1; }
-  .overlay-msg span {
-    font-family: 'Bebas Neue', cursive;
-    font-size: 1.5rem;
-    color: var(--text-muted);
-    letter-spacing: 0.1em;
-  }
-  .overlay-msg small {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.65rem;
-    color: var(--text-muted);
-    letter-spacing: 0.12em;
-  }
-
-  /* ── ERROR ── */
-  .error-toast {
-    position: fixed;
-    top: 20px; left: 50%;
-    transform: translateX(-50%);
-    background: #ff4444;
-    color: white;
-    padding: 10px 20px;
-    border-radius: var(--radius);
-    font-family: 'Space Mono', monospace;
-    font-size: 0.75rem;
-    z-index: 200;
-    display: none;
-  }
-
-  /* ── MOBILE ── */
-  @media (max-width: 600px) {
-    .controls-bar {
-      flex-direction: column;
-      padding: 10px 12px;
-      gap: 8px;
-      align-items: stretch;
-    }
-
-    /* Each row becomes a real flex row */
-    .controls-row1 {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 6px;
-    }
-    .controls-row2 {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .sep { display: none; }
-    .ml-auto { margin-left: auto; }
-
-    /* Bigger touch targets */
-    .btn { padding: 10px 12px; font-size: 0.78rem; min-height: 42px; }
-    .btn.icon { padding: 10px 14px; font-size: 1.1rem; }
-    .btn.primary { min-width: 68px; }
-
-    input[type="range"] { flex: 1; max-width: 130px; }
-
-    .status-pill { margin-left: auto; }
-    .wpm-display { font-size: 1.3rem; min-width: 44px; }
-  }
+/* ── MOBILE ── */
+@media(max-width:700px){
+  .book-sidebar{position:fixed;inset:0;z-index:150;width:100vw !important;height:100vh;}
+  .book-sidebar.collapsed{display:none;}
+  .controls-bar{flex-direction:column;padding:8px 10px;gap:6px;align-items:stretch;}
+  .controls-row1{display:flex;align-items:center;justify-content:space-between;gap:5px;}
+  .controls-row2{display:flex;align-items:center;gap:6px;}
+  .sep{display:none;}
+  .btn{padding:9px 11px;font-size:.75rem;min-height:40px;}
+  .btn.icon{padding:9px 12px;font-size:1rem;}
+  .btn.primary{min-width:64px;}
+  input[type="range"]{flex:1;max-width:120px;}
+  .ml-auto{margin-left:auto;}
+  .status-pill{margin-left:auto;}
+  .wpm-display{font-size:1.25rem;min-width:42px;}
+  #display-word{font-size:clamp(2.8rem,14vw,5rem);}
+}
 </style>
 </head>
 <body data-theme="dark">
 
 <div class="error-toast" id="error-toast"></div>
+<div class="jump-tooltip" id="jump-tooltip">▶ READ FROM HERE</div>
 
-<button class="theme-toggle" id="theme-btn" title="Toggle theme">☀</button>
-
-<!-- ══════════════ UPLOAD SCREEN ══════════════ -->
-<div class="screen active" id="upload-screen">
-  <div class="bg-grid"></div>
-  <div class="logo">Flow<span>Read</span></div>
-  <div class="tagline">One word at a time</div>
-
-  <div class="drop-zone" id="drop-zone">
-    <span class="drop-icon">📖</span>
-    <h2>Drop your book here</h2>
-    <p>PDF or EPUB · click to browse</p>
-    <input type="file" id="file-input" accept=".pdf,.epub" />
-  </div>
+<!-- Top-right toolbar (reader mode) -->
+<div class="top-toolbar" id="top-toolbar" style="display:none;">
+  <button class="toolbar-btn" id="sidebar-toggle-btn" title="Toggle book panel">📖</button>
+  <button class="toolbar-btn" id="theme-btn-reader" title="Toggle theme">☀</button>
+  <button class="toolbar-btn" id="settings-btn" title="Settings">⚙</button>
 </div>
 
-<!-- ══════════════ READER SCREEN ══════════════ -->
-<div class="screen" id="reader-screen">
-  <div class="reader-word-area" id="word-area">
-    <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
-
-    <div id="display-word">READY</div>
-    <div class="word-counter" id="word-counter">0 / 0</div>
-
-    <div class="overlay-msg" id="overlay-msg">
-      <span>PAUSED</span>
-      <small>CLICK · SPACE · PLAY</small>
-    </div>
-  </div>
-
-  <div class="controls-bar">
-    <!-- ROW 1: Transport + WPM -->
-    <div class="controls-row1">
-      <!-- Transport -->
-      <div class="ctrl-group">
-        <button class="btn icon" id="restart-btn" title="Restart">⏮</button>
-        <button class="btn primary" id="play-btn">PLAY</button>
-        <button class="btn icon" id="skip-back-btn" title="-10 words">⏪</button>
-        <button class="btn icon" id="skip-fwd-btn" title="+10 words">⏩</button>
-      </div>
-
-      <div class="sep"></div>
-
-      <!-- WPM -->
-      <div class="ctrl-group">
-        <span class="ctrl-label">WPM</span>
-        <button class="btn icon" id="wpm-dec">−</button>
-        <div class="wpm-display" id="wpm-display">300</div>
-        <button class="btn icon" id="wpm-inc">+</button>
-      </div>
-    </div>
-
-    <!-- ROW 2: Slider + Status + Settings + Close -->
-    <div class="controls-row2">
-      <input type="range" id="wpm-slider" min="50" max="1000" step="25" value="300" style="flex:1;max-width:160px;" />
-      <div class="status-pill" id="status-pill">PAUSED</div>
-      <div class="ctrl-group ml-auto">
-        <button class="btn" id="settings-btn">⚙ SETTINGS</button>
-        <button class="btn" id="close-btn">✕ CLOSE</button>
-      </div>
-    </div>
-
-  </div>
+<!-- Top-right toolbar (upload mode) -->
+<div class="top-toolbar" id="upload-toolbar">
+  <button class="toolbar-btn" id="theme-btn-upload" title="Toggle theme">☀</button>
 </div>
 
-<!-- Settings panel -->
+<!-- Settings Panel -->
 <div class="settings-panel" id="settings-panel">
-  <div class="ctrl-label" style="color:var(--text);font-size:0.8rem;">Settings</div>
+  <div class="settings-title">Settings</div>
   <div class="setting-row">
     <label>FOCUS LETTER</label>
-    <label class="toggle-switch">
-      <input type="checkbox" id="focus-toggle" checked />
-      <span class="slider"></span>
-    </label>
+    <label class="toggle-switch"><input type="checkbox" id="focus-toggle" checked/><span class="slider"></span></label>
   </div>
   <div class="setting-row">
     <label>CHUNK SIZE</label>
-    <select id="chunk-select" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px 8px;font-family:'Space Mono',monospace;font-size:0.7rem;border-radius:4px;cursor:pointer;">
+    <select id="chunk-select" class="setting-select">
       <option value="1" selected>1 word</option>
       <option value="2">2 words</option>
       <option value="3">3 words</option>
@@ -526,22 +175,90 @@
   </div>
   <div class="setting-row">
     <label>PAUSE AT PUNCT.</label>
-    <label class="toggle-switch">
-      <input type="checkbox" id="pause-punct-toggle" checked />
-      <span class="slider"></span>
-    </label>
+    <label class="toggle-switch"><input type="checkbox" id="pause-punct-toggle" checked/><span class="slider"></span></label>
+  </div>
+  <div class="setting-row">
+    <label>SIDEBAR WIDTH</label>
+    <select id="sidebar-width-select" class="setting-select">
+      <option value="260">Narrow</option>
+      <option value="320" selected>Medium</option>
+      <option value="420">Wide</option>
+    </select>
   </div>
 </div>
 
-<!-- PDF.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<!-- JSZip for EPUB -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<!-- ══ UPLOAD SCREEN ══ -->
+<div class="screen active" id="upload-screen">
+  <div class="bg-grid"></div>
+  <div class="logo">Flow<span>Read</span></div>
+  <div class="tagline">One word at a time</div>
+  <div class="drop-zone" id="drop-zone">
+    <span class="drop-icon">📖</span>
+    <h2>Drop your book here</h2>
+    <p>PDF or EPUB · click to browse</p>
+    <input type="file" id="file-input" accept=".pdf,.epub"/>
+  </div>
+</div>
 
+<!-- ══ READER SCREEN ══ -->
+<div class="screen" id="reader-screen">
+  <div class="reader-body">
+
+    <!-- Scrollable book sidebar -->
+    <div class="book-sidebar" id="book-sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-title" id="sidebar-title">BOOK</span>
+        <span class="sidebar-hint">SELECT TEXT → JUMP</span>
+      </div>
+      <div class="book-pages" id="book-pages"></div>
+    </div>
+
+    <!-- Speed reader word display -->
+    <div class="reader-word-area" id="word-area">
+      <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+      <div id="display-word">READY</div>
+      <div class="word-counter" id="word-counter">0 / 0</div>
+      <div class="overlay-msg" id="overlay-msg">
+        <span>PAUSED</span>
+        <small>CLICK · SPACE · PLAY</small>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Controls bar -->
+  <div class="controls-bar">
+    <div class="controls-row1">
+      <div class="ctrl-group">
+        <button class="btn icon" id="restart-btn" title="Restart">⏮</button>
+        <button class="btn primary" id="play-btn">PLAY</button>
+        <button class="btn icon" id="skip-back-btn" title="-10 words">⏪</button>
+        <button class="btn icon" id="skip-fwd-btn" title="+10 words">⏩</button>
+      </div>
+      <div class="sep"></div>
+      <div class="ctrl-group">
+        <span class="ctrl-label">WPM</span>
+        <button class="btn icon" id="wpm-dec">−</button>
+        <div class="wpm-display" id="wpm-display">300</div>
+        <button class="btn icon" id="wpm-inc">+</button>
+      </div>
+    </div>
+    <div class="controls-row2">
+      <input type="range" id="wpm-slider" min="50" max="1000" step="25" value="300"/>
+      <div class="status-pill" id="status-pill">PAUSED</div>
+      <div class="ctrl-group ml-auto">
+        <button class="btn" id="close-btn">✕ CLOSE</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 'use strict';
+const $ = id => document.getElementById(id);
 
-// ── State ──────────────────────────────────────────────
 let words = [];
 let cursor = 0;
 let wpm = 300;
@@ -550,97 +267,139 @@ let timer = null;
 let chunkSize = 1;
 let focusOn = true;
 let pausePunct = true;
-
-const $ = id => document.getElementById(id);
-
-// ── Theme ──────────────────────────────────────────────
-const themeBtn = $('theme-btn');
 let isDark = true;
-themeBtn.onclick = () => {
-  isDark = !isDark;
+let sidebarOpen = true;
+
+// ── Theme ──
+function applyTheme() {
   document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
-  themeBtn.textContent = isDark ? '☀' : '🌙';
+  ['theme-btn-reader','theme-btn-upload'].forEach(id => $(id).textContent = isDark ? '☀' : '🌙');
+}
+$('theme-btn-reader').onclick = () => { isDark = !isDark; applyTheme(); };
+$('theme-btn-upload').onclick = () => { isDark = !isDark; applyTheme(); };
+
+// ── Settings ──
+$('settings-btn').onclick = e => { e.stopPropagation(); $('settings-panel').classList.toggle('open'); };
+document.addEventListener('click', e => {
+  if (!e.target.closest('#settings-panel') && !e.target.closest('#settings-btn'))
+    $('settings-panel').classList.remove('open');
+});
+$('focus-toggle').onchange = e => { focusOn = e.target.checked; updateWordDisplay(); };
+$('pause-punct-toggle').onchange = e => { pausePunct = e.target.checked; };
+$('chunk-select').onchange = e => { chunkSize = +e.target.value; updateWordDisplay(); };
+$('sidebar-width-select').onchange = e => {
+  if (window.innerWidth > 700)
+    document.documentElement.style.setProperty('--sidebar', e.target.value + 'px');
 };
 
-// ── Upload / Drop ──────────────────────────────────────
+// ── Sidebar toggle ──
+$('sidebar-toggle-btn').onclick = () => {
+  sidebarOpen = !sidebarOpen;
+  $('book-sidebar').classList.toggle('collapsed', !sidebarOpen);
+  $('sidebar-toggle-btn').textContent = sidebarOpen ? '📖' : '📕';
+};
+
+// ── Upload ──
 const dropZone = $('drop-zone');
 const fileInput = $('file-input');
-
 dropZone.onclick = () => fileInput.click();
 dropZone.ondragover = e => { e.preventDefault(); dropZone.classList.add('drag-over'); };
 dropZone.ondragleave = () => dropZone.classList.remove('drag-over');
 dropZone.ondrop = e => {
-  e.preventDefault();
-  dropZone.classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (file) handleFile(file);
+  e.preventDefault(); dropZone.classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
 };
 fileInput.onchange = e => { if (e.target.files[0]) handleFile(e.target.files[0]); };
 
 function showError(msg) {
-  const t = $('error-toast');
-  t.textContent = msg;
-  t.style.display = 'block';
+  const t = $('error-toast'); t.textContent = msg; t.style.display = 'block';
   setTimeout(() => t.style.display = 'none', 4000);
 }
 
 async function handleFile(file) {
   const ext = file.name.split('.').pop().toLowerCase();
   dropZone.querySelector('h2').textContent = 'Processing…';
-
   try {
     let text = '';
-    if (ext === 'pdf') {
-      text = await extractPDF(file);
-    } else if (ext === 'epub') {
-      text = await extractEPUB(file);
-    } else {
-      showError('Only .pdf and .epub files are supported.');
-      dropZone.querySelector('h2').textContent = 'Drop your book here';
-      return;
-    }
+    if (ext === 'pdf') text = await loadPDF(file);
+    else if (ext === 'epub') text = await loadEPUB(file);
+    else { showError('Only .pdf and .epub files are supported.'); dropZone.querySelector('h2').textContent = 'Drop your book here'; return; }
 
     words = tokenize(text);
     if (words.length < 5) { showError('Could not extract text from file.'); return; }
 
+    $('sidebar-title').textContent = file.name.replace(/\.[^.]+$/, '').toUpperCase().slice(0, 26);
     cursor = 0;
     showScreen('reader-screen');
+    $('top-toolbar').style.display = 'flex';
+    $('upload-toolbar').style.display = 'none';
     updateWordDisplay();
     updateCounter();
     showOverlay(true);
   } catch(err) {
     console.error(err);
-    showError('Failed to parse file: ' + err.message);
+    showError('Failed to parse: ' + err.message);
     dropZone.querySelector('h2').textContent = 'Drop your book here';
   }
 }
 
-// ── PDF Extraction ─────────────────────────────────────
-async function extractPDF(file) {
+// ── PDF: render canvases per page ──
+async function loadPDF(file) {
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
   const buffer = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
-  let full = '';
+  const container = $('book-pages');
+  container.innerHTML = '';
+  let fullText = '';
+
   for (let i = 1; i <= pdf.numPages; i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    full += content.items.map(s => s.str).join(' ') + ' ';
+    const pageText = content.items.map(s => s.str).join(' ');
+    fullText += pageText + ' ';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'page-wrap';
+
+    const label = document.createElement('div');
+    label.className = 'page-label';
+    label.textContent = 'PAGE ' + i;
+
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    // Scale to fit sidebar width (sidebar ~320px, minus padding ~20px, scale accordingly)
+    const desiredWidth = 280;
+    const naturalVP = page.getViewport({ scale: 1 });
+    const scale = desiredWidth / naturalVP.width;
+    const viewport = page.getViewport({ scale });
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    await page.render({ canvasContext: ctx, viewport }).promise;
+
+    wrap.appendChild(canvas);
+    wrap.appendChild(label);
+    container.appendChild(wrap);
+
+    // Attach selection handler with this page's text
+    ;(function(pt) {
+      wrap.addEventListener('mouseup', () => handleSelectionInContext(pt));
+      wrap.addEventListener('touchend', () => setTimeout(() => handleSelectionInContext(pt), 120));
+    })(pageText);
   }
-  return full;
+
+  return fullText;
 }
 
-// ── EPUB Extraction ────────────────────────────────────
-async function extractEPUB(file) {
+// ── EPUB: render readable text per chapter ──
+async function loadEPUB(file) {
   const buffer = await file.arrayBuffer();
   const zip = await JSZip.loadAsync(buffer);
 
-  // Parse OPF for spine order
   let opfPath = '';
-  const container = zip.file('META-INF/container.xml');
-  if (container) {
-    const xml = await container.async('text');
+  const containerFile = zip.file('META-INF/container.xml');
+  if (containerFile) {
+    const xml = await containerFile.async('text');
     const m = xml.match(/full-path="([^"]+\.opf)"/i);
     if (m) opfPath = m[1];
   }
@@ -660,64 +419,166 @@ async function extractEPUB(file) {
       if (manifest[id]) spineFiles.push(manifest[id]);
     });
   }
-
   if (!spineFiles.length) {
-    // fallback: all html/xhtml files
-    zip.forEach((path, f) => {
-      if (/\.(html|xhtml|htm)$/i.test(path)) spineFiles.push(path);
-    });
+    zip.forEach(path => { if (/\.(html|xhtml|htm)$/i.test(path)) spineFiles.push(path); });
     spineFiles.sort();
   }
 
-  let full = '';
-  for (const path of spineFiles) {
-    const f = zip.file(path);
+  const container = $('book-pages');
+  container.innerHTML = '';
+  let fullText = '';
+
+  for (let si = 0; si < spineFiles.length; si++) {
+    const f = zip.file(spineFiles[si]);
     if (!f) continue;
     const html = await f.async('text');
     const tmp = document.createElement('div');
     tmp.innerHTML = html;
-    // Remove scripts/styles
     tmp.querySelectorAll('script,style,nav').forEach(n => n.remove());
-    full += (tmp.textContent || tmp.innerText) + ' ';
+    const chapterText = (tmp.textContent || tmp.innerText).replace(/\s+/g, ' ').trim();
+    fullText += chapterText + ' ';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'page-wrap';
+    wrap.style.background = 'var(--surface2)';
+
+    const label = document.createElement('div');
+    label.className = 'page-label';
+    label.textContent = 'CHAPTER ' + (si + 1);
+
+    const textDiv = document.createElement('div');
+    textDiv.className = 'epub-text';
+
+    // Split into readable paragraphs
+    const paras = chapterText.split(/(?<=[.!?])\s{2,}|\n\n+/).filter(p => p.trim().length > 2);
+    if (paras.length > 0) {
+      paras.forEach(para => {
+        const p = document.createElement('p');
+        p.textContent = para.trim();
+        textDiv.appendChild(p);
+      });
+    } else {
+      const p = document.createElement('p');
+      p.textContent = chapterText;
+      textDiv.appendChild(p);
+    }
+
+    wrap.appendChild(label);
+    wrap.appendChild(textDiv);
+    container.appendChild(wrap);
+
+    ;(function(ct) {
+      wrap.addEventListener('mouseup', () => handleSelectionInContext(ct));
+      wrap.addEventListener('touchend', () => setTimeout(() => handleSelectionInContext(ct), 120));
+    })(chapterText);
   }
-  return full;
+
+  return fullText;
 }
 
-// ── Tokenise ───────────────────────────────────────────
+// ── Selection & Jump ──
+const jumpTooltip = $('jump-tooltip');
+let pendingJumpCursor = -1;
+
+function handleSelectionInContext(contextText) {
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed) { jumpTooltip.style.display = 'none'; return; }
+  const selectedText = sel.toString().trim();
+  if (!selectedText) { jumpTooltip.style.display = 'none'; return; }
+
+  const selectedWords = tokenize(selectedText);
+  if (!selectedWords.length) return;
+  const firstWord = selectedWords[0];
+
+  // Find where this context block starts in our global words array
+  const contextWords = tokenize(contextText);
+  const blockStart = findBlockStart(contextWords);
+
+  // Then find the selected first word starting from blockStart
+  const idx = findWordFrom(firstWord, blockStart);
+
+  if (idx === -1) {
+    jumpTooltip.style.display = 'none';
+    return;
+  }
+  pendingJumpCursor = idx;
+
+  // Position tooltip above selection
+  const range = sel.getRangeAt(0);
+  const rect = range.getBoundingClientRect();
+  const tooltipLeft = Math.max(60, Math.min(rect.left + rect.width / 2, window.innerWidth - 60));
+  jumpTooltip.style.left = tooltipLeft + 'px';
+  jumpTooltip.style.top = (rect.top + window.scrollY - 48) + 'px';
+  jumpTooltip.style.display = 'block';
+}
+
+// Find where a block of text starts in our global words array
+function findBlockStart(blockWords) {
+  if (!blockWords.length) return 0;
+  const target0 = normalize(blockWords[0]);
+  const target1 = blockWords[1] ? normalize(blockWords[1]) : null;
+  for (let i = 0; i < words.length; i++) {
+    if (normalize(words[i]) === target0) {
+      if (!target1 || (i + 1 < words.length && normalize(words[i+1]) === target1)) {
+        return i;
+      }
+    }
+  }
+  return 0;
+}
+
+// Find first occurrence of word at or after startIdx, with global fallback
+function findWordFrom(word, startIdx) {
+  const w = normalize(word);
+  for (let i = startIdx; i < words.length; i++) {
+    if (normalize(words[i]) === w) return i;
+  }
+  for (let i = 0; i < startIdx; i++) {
+    if (normalize(words[i]) === w) return i;
+  }
+  return -1;
+}
+
+function normalize(w) { return w.toLowerCase().replace(/[^a-z0-9]/g, ''); }
+
+jumpTooltip.onclick = () => {
+  if (pendingJumpCursor >= 0) {
+    pause();
+    cursor = pendingJumpCursor;
+    updateWordDisplay();
+    updateCounter();
+    window.getSelection()?.removeAllRanges();
+    jumpTooltip.style.display = 'none';
+    pendingJumpCursor = -1;
+    setTimeout(play, 150);
+  }
+};
+
+document.addEventListener('mousedown', e => {
+  if (!e.target.closest('#jump-tooltip')) jumpTooltip.style.display = 'none';
+});
+
+// ── Tokenise ──
 function tokenize(text) {
-  return text
-    .replace(/\s+/g, ' ')
-    .trim()
-    .split(' ')
-    .map(w => w.trim())
-    .filter(w => w.length > 0);
+  return text.replace(/\s+/g,' ').trim().split(' ').map(w=>w.trim()).filter(w=>w.length>0);
 }
 
-// ── Screen switch ──────────────────────────────────────
+// ── Screen switch ──
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   $(id).classList.add('active');
 }
 
-// ── Word display ───────────────────────────────────────
+// ── Word display ──
 function updateWordDisplay() {
   const chunk = words.slice(cursor, cursor + chunkSize).join(' ');
   const el = $('display-word');
-
   if (focusOn && chunkSize === 1 && chunk.length > 1) {
-    // Highlight optimal recognition point (~1/3 into word)
     const idx = Math.floor(chunk.replace(/[^a-zA-Z]/g,'').length * 0.33);
-    let letterCount = 0;
-    let html = '';
-    let highlighted = false;
+    let letterCount = 0, html = '', highlighted = false;
     for (let c of chunk) {
       if (!highlighted && /[a-zA-Z]/.test(c)) {
-        if (letterCount === idx) {
-          html += `<span class="focus-letter">${c}</span>`;
-          highlighted = true;
-          letterCount++;
-          continue;
-        }
+        if (letterCount === idx) { html += `<span class="focus-letter">${c}</span>`; highlighted = true; letterCount++; continue; }
         letterCount++;
       }
       html += c;
@@ -734,13 +595,11 @@ function updateCounter() {
   $('progress-bar').style.width = pct + '%';
 }
 
-function showOverlay(show) {
-  $('overlay-msg').classList.toggle('visible', show);
-}
+function showOverlay(show) { $('overlay-msg').classList.toggle('visible', show); }
 
-// ── Playback ───────────────────────────────────────────
+// ── Playback ──
 function getDelay() {
-  const base = 60000 / wpm; // ms per word
+  const base = 60000 / wpm;
   if (pausePunct) {
     const chunk = words.slice(cursor, cursor + chunkSize).join(' ');
     if (/[.!?]$/.test(chunk)) return base * 3.5;
@@ -750,14 +609,8 @@ function getDelay() {
 }
 
 function tick() {
-  if (cursor >= words.length) {
-    pause();
-    $('display-word').textContent = 'DONE';
-    showOverlay(false);
-    return;
-  }
-  updateWordDisplay();
-  updateCounter();
+  if (cursor >= words.length) { pause(); $('display-word').textContent = 'DONE'; showOverlay(false); return; }
+  updateWordDisplay(); updateCounter();
   cursor += chunkSize;
   timer = setTimeout(tick, getDelay());
 }
@@ -774,8 +627,7 @@ function play() {
 }
 
 function pause() {
-  playing = false;
-  clearTimeout(timer);
+  playing = false; clearTimeout(timer);
   $('play-btn').textContent = 'PLAY';
   $('status-pill').textContent = 'PAUSED';
   $('status-pill').classList.remove('playing');
@@ -784,77 +636,39 @@ function pause() {
 
 function togglePlay() { playing ? pause() : play(); }
 
-// ── Controls ───────────────────────────────────────────
+// ── Controls ──
 $('play-btn').onclick = togglePlay;
+$('restart-btn').onclick = () => { pause(); cursor = 0; updateWordDisplay(); updateCounter(); };
+$('skip-back-btn').onclick = () => { cursor = Math.max(0, cursor-10); if(!playing){updateWordDisplay();updateCounter();} };
+$('skip-fwd-btn').onclick = () => { cursor = Math.min(words.length-1, cursor+10); if(!playing){updateWordDisplay();updateCounter();} };
+$('word-area').onclick = e => { if(e.target.closest('.progress-bar-wrap')) return; togglePlay(); };
 
-$('restart-btn').onclick = () => {
-  pause();
-  cursor = 0;
-  updateWordDisplay();
-  updateCounter();
-};
-
-$('skip-back-btn').onclick = () => {
-  cursor = Math.max(0, cursor - 10);
-  if (!playing) updateWordDisplay(), updateCounter();
-};
-
-$('skip-fwd-btn').onclick = () => {
-  cursor = Math.min(words.length - 1, cursor + 10);
-  if (!playing) updateWordDisplay(), updateCounter();
-};
-
-// Click word area to toggle
-$('word-area').onclick = e => {
-  if (e.target.closest('.progress-bar-wrap')) return;
-  togglePlay();
-};
-
-// WPM controls
 function setWPM(v) {
   wpm = Math.max(50, Math.min(1000, v));
   $('wpm-display').textContent = wpm;
   $('wpm-slider').value = wpm;
 }
-
-$('wpm-dec').onclick = () => setWPM(wpm - 25);
-$('wpm-inc').onclick = () => setWPM(wpm + 25);
+$('wpm-dec').onclick = () => setWPM(wpm-25);
+$('wpm-inc').onclick = () => setWPM(wpm+25);
 $('wpm-slider').oninput = e => setWPM(+e.target.value);
 
-// Keyboard
 document.addEventListener('keydown', e => {
   if ($('reader-screen').classList.contains('active')) {
     if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
     if (e.code === 'ArrowRight') $('skip-fwd-btn').click();
     if (e.code === 'ArrowLeft') $('skip-back-btn').click();
-    if (e.code === 'ArrowUp') setWPM(wpm + 25);
-    if (e.code === 'ArrowDown') setWPM(wpm - 25);
+    if (e.code === 'ArrowUp') setWPM(wpm+25);
+    if (e.code === 'ArrowDown') setWPM(wpm-25);
   }
 });
 
-// Settings
-$('settings-btn').onclick = e => {
-  e.stopPropagation();
-  $('settings-panel').classList.toggle('open');
-};
-
-document.addEventListener('click', e => {
-  if (!e.target.closest('#settings-panel') && !e.target.closest('#settings-btn')) {
-    $('settings-panel').classList.remove('open');
-  }
-});
-
-$('focus-toggle').onchange = e => { focusOn = e.target.checked; updateWordDisplay(); };
-$('pause-punct-toggle').onchange = e => { pausePunct = e.target.checked; };
-$('chunk-select').onchange = e => { chunkSize = +e.target.value; updateWordDisplay(); };
-
-// Close reader
 $('close-btn').onclick = () => {
-  pause();
-  words = [];
-  cursor = 0;
+  pause(); words = []; cursor = 0;
+  $('book-pages').innerHTML = '';
   fileInput.value = '';
   dropZone.querySelector('h2').textContent = 'Drop your book here';
+  $('top-toolbar').style.display = 'none';
+  $('upload-toolbar').style.display = 'flex';
   showScreen('upload-screen');
 };
 </script>
