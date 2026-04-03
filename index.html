@@ -2,187 +2,420 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
 <title>FlowRead — Speed Reader</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap');
+
 
 :root {
-  --bg:#0a0a0a; --surface:#111; --surface2:#1a1a1a; --border:#2a2a2a;
-  --text:#f0f0f0; --text-muted:#555; --accent:#e8ff47; --accent2:#ff6b35;
-  --word-color:#fff; --focus-color:#e8ff47; --radius:4px; --t:.2s ease;
-  --sidebar:320px;
+  --bg:#0a0a0a; --surface:#111; --surface2:#1c1c1c; --border:#272727;
+  --text:#f0f0f0; --muted:#555; --accent:#e8ff47; --focus:#e8ff47;
+  --r:5px; --t:.18s ease; --sidebar:300px;
+  --bar-h:64px;        /* controls bar height */
+  --toolbar-h:52px;    /* top toolbar clearance */
 }
-[data-theme="light"] {
-  --bg:#f5f2eb; --surface:#ede9df; --surface2:#e0dbd0; --border:#ccc8be;
-  --text:#1a1a1a; --text-muted:#888; --accent:#1a1a1a; --accent2:#c94f1a;
-  --word-color:#0a0a0a; --focus-color:#c94f1a;
+[data-theme="light"]{
+  --bg:#f4f1ea; --surface:#ebe7dc; --surface2:#dedad0; --border:#cdc9be;
+  --text:#1a1a1a; --muted:#888; --accent:#1a1a1a; --focus:#c94f1a;
 }
 
-*{margin:0;padding:0;box-sizing:border-box;}
-html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);transition:background var(--t),color var(--t);overflow:hidden;}
+/* ══════════════════════════════════════════
+   BASE
+══════════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{
+  height:100%; height:100dvh;
+  font-family:'DM Sans',sans-serif;
+  background:var(--bg); color:var(--text);
+  transition:background var(--t),color var(--t);
+  overflow:hidden;
+}
 
-.screen{display:none;width:100%;height:100vh;}
+/* ══════════════════════════════════════════
+   SCREENS
+══════════════════════════════════════════ */
+.screen{display:none;width:100%;height:100%;height:100dvh;}
 .screen.active{display:flex;}
 
-/* ── UPLOAD ── */
-#upload-screen{flex-direction:column;align-items:center;justify-content:center;gap:36px;padding:40px;position:relative;}
-.bg-grid{position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:40px 40px;opacity:.3;pointer-events:none;}
-.logo{font-family:'Bebas Neue',cursive;font-size:clamp(2.5rem,6vw,5rem);letter-spacing:.08em;color:var(--text);position:relative;z-index:1;}
+/* ══════════════════════════════════════════
+   UPLOAD SCREEN
+══════════════════════════════════════════ */
+#upload-screen{
+  flex-direction:column;align-items:center;justify-content:center;
+  gap:32px;padding:24px;position:relative;
+}
+.bg-grid{
+  position:absolute;inset:0;pointer-events:none;opacity:.25;
+  background-image:
+    linear-gradient(var(--border) 1px,transparent 1px),
+    linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:40px 40px;
+}
+.logo{
+  font-family:'Bebas Neue',cursive;
+  font-size:clamp(2.8rem,8vw,5rem);
+  letter-spacing:.08em;color:var(--text);position:relative;z-index:1;
+}
 .logo span{color:var(--accent);}
-.tagline{font-family:'Space Mono',monospace;font-size:.75rem;color:var(--text-muted);letter-spacing:.2em;text-transform:uppercase;margin-top:-28px;z-index:1;}
-.drop-zone{width:min(480px,90vw);border:2px dashed var(--border);border-radius:8px;padding:56px 40px;text-align:center;cursor:pointer;transition:border-color var(--t),background var(--t);position:relative;z-index:1;background:var(--surface);}
+.tagline{
+  font-family:'Space Mono',monospace;font-size:.7rem;
+  color:var(--muted);letter-spacing:.2em;text-transform:uppercase;
+  margin-top:-26px;z-index:1;
+}
+.drop-zone{
+  width:min(440px,92vw);border:2px dashed var(--border);border-radius:10px;
+  padding:clamp(32px,8vw,56px) clamp(20px,6vw,40px);
+  text-align:center;cursor:pointer;
+  transition:border-color var(--t),background var(--t);
+  background:var(--surface);position:relative;z-index:1;
+}
 .drop-zone:hover,.drop-zone.drag-over{border-color:var(--accent);background:var(--surface2);}
-.drop-icon{font-size:3rem;margin-bottom:16px;display:block;}
-.drop-zone h2{font-size:1.1rem;font-weight:500;margin-bottom:8px;}
-.drop-zone p{font-size:.8rem;color:var(--text-muted);font-family:'Space Mono',monospace;}
+.drop-icon{font-size:2.8rem;margin-bottom:14px;display:block;}
+.drop-zone h2{font-size:1rem;font-weight:500;margin-bottom:6px;}
+.drop-zone p{font-size:.75rem;color:var(--muted);font-family:'Space Mono',monospace;}
 #file-input{display:none;}
 
-/* ── TOP-RIGHT TOOLBAR ── */
-.top-toolbar{position:fixed;top:14px;right:14px;z-index:200;display:flex;align-items:center;gap:8px;}
-.toolbar-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:50%;width:38px;height:38px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:background var(--t),border-color var(--t);flex-shrink:0;}
-.toolbar-btn:hover{background:var(--surface2);border-color:var(--accent);}
+/* ══════════════════════════════════════════
+   TOP TOOLBAR  (fixed, always on top)
+══════════════════════════════════════════ */
+.top-toolbar{
+  position:fixed;top:10px;right:10px;z-index:500;
+  display:flex;align-items:center;gap:7px;
+}
+.tbtn{
+  width:38px;height:38px;border-radius:50%;
+  background:var(--surface);border:1px solid var(--border);
+  color:var(--text);font-size:1rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background var(--t),border-color var(--t);
+  flex-shrink:0;
+}
+.tbtn:hover{background:var(--surface2);border-color:var(--accent);}
 
-/* ── SETTINGS PANEL ── */
-.settings-panel{position:fixed;top:60px;right:14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;width:240px;display:none;flex-direction:column;gap:14px;z-index:190;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+/* ══════════════════════════════════════════
+   SETTINGS PANEL
+══════════════════════════════════════════ */
+.settings-panel{
+  position:fixed;top:56px;right:10px;z-index:490;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:18px;width:230px;
+  display:none;flex-direction:column;gap:14px;
+  box-shadow:0 8px 32px rgba(0,0,0,.55);
+}
 .settings-panel.open{display:flex;}
-.settings-title{font-family:'Bebas Neue',cursive;font-size:1.1rem;letter-spacing:.08em;color:var(--text);border-bottom:1px solid var(--border);padding-bottom:10px;}
-.setting-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.setting-row label:first-child{font-family:'Space Mono',monospace;font-size:.65rem;color:var(--text-muted);letter-spacing:.08em;}
-.toggle-switch{position:relative;width:36px;height:20px;flex-shrink:0;}
-.toggle-switch input{display:none;}
-.toggle-switch .slider{position:absolute;inset:0;background:var(--surface2);border:1px solid var(--border);border-radius:20px;cursor:pointer;transition:background var(--t);}
-.toggle-switch .slider:before{content:'';position:absolute;width:12px;height:12px;left:3px;top:3px;background:var(--text-muted);border-radius:50%;transition:transform var(--t),background var(--t);}
-.toggle-switch input:checked+.slider{background:var(--accent);border-color:var(--accent);}
-.toggle-switch input:checked+.slider:before{transform:translateX(16px);background:var(--bg);}
-.setting-select{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px 8px;font-family:'Space Mono',monospace;font-size:.65rem;border-radius:4px;cursor:pointer;}
+.stitle{
+  font-family:'Bebas Neue',cursive;font-size:1.05rem;
+  letter-spacing:.08em;border-bottom:1px solid var(--border);
+  padding-bottom:10px;
+}
+.srow{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.srow span{font-family:'Space Mono',monospace;font-size:.62rem;color:var(--muted);letter-spacing:.06em;}
+.tog{position:relative;width:36px;height:20px;flex-shrink:0;}
+.tog input{display:none;}
+.tog .sl{position:absolute;inset:0;background:var(--surface2);border:1px solid var(--border);border-radius:20px;cursor:pointer;transition:background var(--t);}
+.tog .sl:before{content:'';position:absolute;width:12px;height:12px;left:3px;top:3px;background:var(--muted);border-radius:50%;transition:transform var(--t),background var(--t);}
+.tog input:checked+.sl{background:var(--accent);border-color:var(--accent);}
+.tog input:checked+.sl:before{transform:translateX(16px);background:var(--bg);}
+.ssel{
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);padding:4px 7px;font-family:'Space Mono',monospace;
+  font-size:.62rem;border-radius:4px;cursor:pointer;
+}
 
-/* ── READER SCREEN ── */
+/* ══════════════════════════════════════════
+   READER SCREEN  — three-layer column:
+   [top-toolbar space] [reader-body] [controls-bar]
+══════════════════════════════════════════ */
 #reader-screen{flex-direction:column;background:var(--bg);}
+
+/* spacer so content doesn't hide under fixed toolbar */
+.toolbar-spacer{height:var(--toolbar-h);flex-shrink:0;}
+
+/* body = sidebar + word-area side by side */
 .reader-body{flex:1;display:flex;overflow:hidden;min-height:0;}
 
-/* ── SIDEBAR ── */
-.book-sidebar{width:var(--sidebar);flex-shrink:0;border-right:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;overflow:hidden;transition:width var(--t),min-width var(--t);}
-.book-sidebar.collapsed{width:0 !important;min-width:0;border-right:none;}
-.sidebar-header{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:8px;}
-.sidebar-title{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.sidebar-hint{font-family:'Space Mono',monospace;font-size:.52rem;color:var(--accent);letter-spacing:.04em;background:rgba(232,255,71,.08);padding:2px 7px;border-radius:10px;border:1px solid rgba(232,255,71,.2);white-space:nowrap;flex-shrink:0;}
-[data-theme="light"] .sidebar-hint{color:var(--accent2);background:rgba(201,79,26,.08);border-color:rgba(201,79,26,.2);}
-.book-pages{flex:1;overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px;}
-.book-pages::-webkit-scrollbar{width:4px;}
+/* ══════════════════════════════════════════
+   SIDEBAR  (desktop: left panel)
+══════════════════════════════════════════ */
+.book-sidebar{
+  width:var(--sidebar);flex-shrink:0;
+  border-right:1px solid var(--border);
+  background:var(--surface);
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  transition:width var(--t);
+}
+.book-sidebar.collapsed{width:0;border-right:none;}
+.sb-header{
+  padding:10px 12px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;flex-shrink:0;
+}
+.sb-title{
+  font-family:'Space Mono',monospace;font-size:.58rem;
+  color:var(--muted);letter-spacing:.1em;text-transform:uppercase;
+  flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.sb-hint{
+  font-family:'Space Mono',monospace;font-size:.5rem;
+  color:var(--accent);letter-spacing:.04em;white-space:nowrap;
+  background:rgba(232,255,71,.07);padding:2px 7px;
+  border-radius:10px;border:1px solid rgba(232,255,71,.18);flex-shrink:0;
+}
+[data-theme="light"] .sb-hint{color:var(--focus);background:rgba(201,79,26,.07);border-color:rgba(201,79,26,.18);}
+
+.book-pages{
+  flex:1;overflow-y:auto;padding:10px;
+  display:flex;flex-direction:column;gap:10px;
+}
+.book-pages::-webkit-scrollbar{width:3px;}
 .book-pages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 
-/* PDF page */
-.page-wrap{position:relative;border:1px solid var(--border);border-radius:4px;overflow:hidden;background:#1c1c1c;flex-shrink:0;cursor:text;}
-[data-theme="light"] .page-wrap{background:#fff;}
+.page-wrap{
+  border:1px solid var(--border);border-radius:5px;
+  overflow:hidden;background:#1a1a1a;flex-shrink:0;cursor:text;
+}
+[data-theme="light"] .page-wrap{background:#fafafa;}
 .page-wrap canvas{display:block;width:100%;height:auto;}
-.page-label{font-family:'Space Mono',monospace;font-size:.52rem;color:var(--text-muted);text-align:center;padding:4px 0;background:var(--surface2);letter-spacing:.08em;}
-
-/* EPUB text */
-.epub-text{font-family:'DM Sans',sans-serif;font-size:.82rem;line-height:1.75;color:var(--text);cursor:text;user-select:text;padding:12px 14px;}
-.epub-text p{margin-bottom:.75em;}
-.epub-text p:last-child{margin-bottom:0;}
+.page-label{
+  font-family:'Space Mono',monospace;font-size:.5rem;
+  color:var(--muted);text-align:center;padding:3px 0;
+  background:var(--surface2);letter-spacing:.08em;
+}
+.epub-text{
+  font-size:.82rem;line-height:1.75;color:var(--text);
+  cursor:text;user-select:text;padding:12px 14px;
+}
+.epub-text p{margin-bottom:.72em;}
+.epub-text p:last-child{margin:0;}
 
 /* Jump tooltip */
-.jump-tooltip{position:fixed;z-index:300;background:var(--accent);color:var(--bg);font-family:'Space Mono',monospace;font-size:.65rem;font-weight:700;letter-spacing:.06em;padding:7px 14px;border-radius:4px;cursor:pointer;display:none;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.5);transform:translateX(-50%);}
-.jump-tooltip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--accent);}
-.jump-tooltip:hover{opacity:.9;}
+.jump-tip{
+  position:fixed;z-index:600;
+  background:var(--accent);color:var(--bg);
+  font-family:'Space Mono',monospace;font-size:.62rem;font-weight:700;
+  letter-spacing:.05em;padding:7px 14px;border-radius:5px;
+  cursor:pointer;display:none;white-space:nowrap;
+  box-shadow:0 4px 20px rgba(0,0,0,.5);
+  transform:translateX(-50%);
+}
+.jump-tip::after{
+  content:'';position:absolute;top:100%;left:50%;
+  transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:var(--accent);
+}
 
-/* ── WORD AREA ── */
-.reader-word-area{flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;padding:20px;position:relative;cursor:pointer;min-width:0;}
-.progress-bar-wrap{position:absolute;top:0;left:0;right:0;height:2px;background:var(--border);}
-.progress-bar{height:100%;background:var(--accent);width:0%;transition:width .1s linear;}
-#display-word{font-family:'Bebas Neue',cursive;font-size:clamp(3.5rem,10vw,9rem);color:var(--word-color);letter-spacing:.04em;text-align:center;user-select:none;line-height:1;}
-#display-word .focus-letter{color:var(--focus-color);}
-.word-counter{font-family:'Space Mono',monospace;font-size:.65rem;color:var(--text-muted);letter-spacing:.15em;}
-.overlay-msg{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;pointer-events:none;opacity:0;transition:opacity .3s;}
-.overlay-msg.visible{opacity:1;}
-.overlay-msg span{font-family:'Bebas Neue',cursive;font-size:1.4rem;color:var(--text-muted);letter-spacing:.1em;}
-.overlay-msg small{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text-muted);letter-spacing:.12em;}
+/* ══════════════════════════════════════════
+   WORD AREA
+══════════════════════════════════════════ */
+.reader-word-area{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:18px;padding:20px;
+  position:relative;cursor:pointer;min-width:0;
+}
+.prog-wrap{position:absolute;top:0;left:0;right:0;height:2px;background:var(--border);}
+.prog-bar{height:100%;background:var(--accent);width:0%;transition:width .1s linear;}
 
-/* ── CONTROLS BAR ── */
-.controls-bar{background:var(--surface);border-top:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;}
-.controls-row1{display:contents;}
-.controls-row2{display:contents;}
-.ctrl-group{display:flex;align-items:center;gap:6px;}
-.ctrl-label{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;}
-.btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:7px 14px;font-family:'Space Mono',monospace;font-size:.72rem;cursor:pointer;letter-spacing:.05em;transition:background var(--t),border-color var(--t),color var(--t);white-space:nowrap;}
+#display-word{
+  font-family:'Bebas Neue',cursive;
+  font-size:clamp(3rem,11vw,9rem);
+  color:var(--text);letter-spacing:.04em;
+  text-align:center;user-select:none;line-height:1;
+}
+#display-word .fl{color:var(--focus);}
+
+.word-counter{
+  font-family:'Space Mono',monospace;font-size:.62rem;
+  color:var(--muted);letter-spacing:.14em;
+}
+.overlay{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:10px;
+  pointer-events:none;opacity:0;transition:opacity .25s;
+}
+.overlay.show{opacity:1;}
+.overlay big{font-family:'Bebas Neue',cursive;font-size:1.6rem;color:var(--muted);letter-spacing:.1em;}
+.overlay small{font-family:'Space Mono',monospace;font-size:.6rem;color:var(--muted);letter-spacing:.12em;}
+
+/* ══════════════════════════════════════════
+   CONTROLS BAR
+══════════════════════════════════════════ */
+.controls-bar{
+  background:var(--surface);border-top:1px solid var(--border);
+  height:var(--bar-h);
+  padding:0 16px;
+  display:flex;align-items:center;gap:10px;
+  flex-shrink:0;
+}
+.cg{display:flex;align-items:center;gap:6px;}
+.clabel{
+  font-family:'Space Mono',monospace;font-size:.58rem;
+  color:var(--muted);letter-spacing:.09em;text-transform:uppercase;white-space:nowrap;
+}
+.btn{
+  background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  border-radius:var(--r);padding:7px 13px;
+  font-family:'Space Mono',monospace;font-size:.7rem;
+  cursor:pointer;letter-spacing:.04em;white-space:nowrap;
+  transition:background var(--t),border-color var(--t),color var(--t);
+}
 .btn:hover{background:var(--border);border-color:var(--accent);}
-.btn.primary{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:700;min-width:76px;}
+.btn.primary{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:700;min-width:72px;}
 .btn.primary:hover{opacity:.85;}
-.btn.icon{padding:7px 10px;font-size:.95rem;}
-.wpm-display{font-family:'Bebas Neue',cursive;font-size:1.5rem;color:var(--accent);min-width:50px;text-align:center;}
-input[type="range"]{-webkit-appearance:none;width:110px;height:3px;background:var(--border);border-radius:2px;outline:none;}
-input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--accent);cursor:pointer;}
-.sep{width:1px;height:22px;background:var(--border);flex-shrink:0;}
-.ml-auto{margin-left:auto;}
-.status-pill{font-family:'Space Mono',monospace;font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;padding:3px 9px;border-radius:20px;border:1px solid var(--border);color:var(--text-muted);}
-.status-pill.playing{color:var(--accent);border-color:var(--accent);}
+.btn.ic{padding:7px 9px;font-size:.95rem;}
+.wpm-num{
+  font-family:'Bebas Neue',cursive;font-size:1.5rem;
+  color:var(--accent);min-width:48px;text-align:center;
+}
+input[type=range]{
+  -webkit-appearance:none;width:100px;height:3px;
+  background:var(--border);border-radius:2px;outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:13px;height:13px;
+  border-radius:50%;background:var(--accent);cursor:pointer;
+}
+.sep{width:1px;height:20px;background:var(--border);flex-shrink:0;}
+.ml{margin-left:auto;}
+.pill{
+  font-family:'Space Mono',monospace;font-size:.55rem;letter-spacing:.14em;
+  text-transform:uppercase;padding:3px 8px;border-radius:20px;
+  border:1px solid var(--border);color:var(--muted);white-space:nowrap;
+}
+.pill.on{color:var(--accent);border-color:var(--accent);}
 
-/* ── ERROR TOAST ── */
-.error-toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#ff4444;color:#fff;padding:9px 18px;border-radius:var(--radius);font-family:'Space Mono',monospace;font-size:.72rem;z-index:400;display:none;}
+/* error */
+.err{
+  position:fixed;top:14px;left:50%;transform:translateX(-50%);
+  background:#e33;color:#fff;padding:8px 16px;
+  border-radius:var(--r);font-family:'Space Mono',monospace;
+  font-size:.7rem;z-index:700;display:none;
+}
 
-/* ── MOBILE ── */
-@media(max-width:700px){
-  .book-sidebar{position:fixed;inset:0;z-index:150;width:100vw !important;height:100vh;}
-  .book-sidebar.collapsed{display:none;}
-  .controls-bar{flex-direction:column;padding:8px 10px;gap:6px;align-items:stretch;}
-  .controls-row1{display:flex;align-items:center;justify-content:space-between;gap:5px;}
-  .controls-row2{display:flex;align-items:center;gap:6px;}
+/* ══════════════════════════════════════════
+   MOBILE  ≤ 640px
+   Layout: word area fills screen, controls
+   bar is a compact single row at bottom,
+   sidebar becomes a slide-up sheet.
+══════════════════════════════════════════ */
+@media(max-width:640px){
+  :root{--bar-h:auto;--toolbar-h:52px;}
+
+  /* ── Upload ── */
+  #upload-screen{padding:20px 16px;gap:20px;}
+  .drop-zone{padding:36px 18px;}
+  .tagline{font-size:.62rem;margin-top:-18px;}
+
+  /* ── Toolbar ── */
+  .top-toolbar{top:8px;right:8px;gap:6px;}
+  .tbtn{width:36px;height:36px;font-size:.9rem;}
+  .settings-panel{right:8px;left:8px;width:auto;top:52px;}
+
+  /* ── Reader screen ── */
+  #reader-screen{flex-direction:column;}
+  .toolbar-spacer{height:52px;}
+
+  /* reader-body: single column — sidebar hidden by default */
+  .reader-body{position:relative;flex:1;min-height:0;overflow:hidden;}
+
+  /* Word area fills the whole reader-body */
+  .reader-word-area{
+    position:absolute;inset:0;
+    padding:16px 16px 10px;
+    gap:12px;
+  }
+  #display-word{font-size:clamp(2.8rem,15vw,5.5rem);}
+
+  /* Sidebar: slide-in from bottom as a sheet */
+  .book-sidebar{
+    position:absolute;
+    left:0;right:0;bottom:0;
+    width:100% !important;
+    height:75%;
+    border-right:none;
+    border-top:1px solid var(--border);
+    border-radius:14px 14px 0 0;
+    z-index:100;
+    transform:translateY(0);
+    transition:transform var(--t);
+    /* show by default only if open */
+  }
+  .book-sidebar.collapsed{
+    transform:translateY(105%);
+    pointer-events:none;
+  }
+
+  /* ── Controls bar ── */
+  .controls-bar{
+    height:auto;
+    flex-direction:column;
+    padding:8px 10px;
+    padding-bottom:max(8px, env(safe-area-inset-bottom));
+    gap:6px;
+    align-items:stretch;
+    border-top:1px solid var(--border);
+  }
+
+  /* Row 1: all transport + WPM in one flex row */
+  .mob-row1{
+    display:flex;align-items:center;
+    justify-content:space-between;gap:5px;
+  }
+  /* Row 2: slider + pill + close */
+  .mob-row2{
+    display:flex;align-items:center;gap:8px;
+  }
+
+  /* Desktop-only wrappers become transparent on mobile */
+  .desk-only{display:none !important;}
+
+  /* Bigger touch targets */
+  .btn{height:42px;padding:0 11px;font-size:.7rem;display:flex;align-items:center;justify-content:center;}
+  .btn.ic{width:42px;padding:0;font-size:1rem;}
+  .btn.primary{min-width:62px;}
+  #close-btn{min-width:auto;}
+
+  .wpm-num{font-size:1.2rem;min-width:42px;}
+  .clabel{font-size:.52rem;}
+  input[type=range]{flex:1;min-width:0;max-width:none;}
+  .pill{font-size:.5rem;padding:2px 7px;}
+  .ml{margin-left:auto;}
   .sep{display:none;}
-  .btn{padding:9px 11px;font-size:.75rem;min-height:40px;}
-  .btn.icon{padding:9px 12px;font-size:1rem;}
-  .btn.primary{min-width:64px;}
-  input[type="range"]{flex:1;max-width:120px;}
-  .ml-auto{margin-left:auto;}
-  .status-pill{margin-left:auto;}
-  .wpm-display{font-size:1.25rem;min-width:42px;}
-  #display-word{font-size:clamp(2.8rem,14vw,5rem);}
 }
 </style>
 </head>
 <body data-theme="dark">
 
-<div class="error-toast" id="error-toast"></div>
-<div class="jump-tooltip" id="jump-tooltip">▶ READ FROM HERE</div>
+<div class="err" id="err"></div>
+<div class="jump-tip" id="jump-tip">▶ READ FROM HERE</div>
 
-<!-- Top-right toolbar (reader mode) -->
-<div class="top-toolbar" id="top-toolbar" style="display:none;">
-  <button class="toolbar-btn" id="sidebar-toggle-btn" title="Toggle book panel">📖</button>
-  <button class="toolbar-btn" id="theme-btn-reader" title="Toggle theme">☀</button>
-  <button class="toolbar-btn" id="settings-btn" title="Settings">⚙</button>
-</div>
-
-<!-- Top-right toolbar (upload mode) -->
+<!-- ── TOP TOOLBAR ── -->
 <div class="top-toolbar" id="upload-toolbar">
-  <button class="toolbar-btn" id="theme-btn-upload" title="Toggle theme">☀</button>
+  <button class="tbtn" id="theme-upload">☀</button>
+</div>
+<div class="top-toolbar" id="reader-toolbar" style="display:none;">
+  <button class="tbtn" id="sidebar-btn" title="Toggle book">📖</button>
+  <button class="tbtn" id="theme-reader">☀</button>
+  <button class="tbtn" id="settings-btn">⚙</button>
 </div>
 
-<!-- Settings Panel -->
+<!-- ── SETTINGS PANEL ── -->
 <div class="settings-panel" id="settings-panel">
-  <div class="settings-title">Settings</div>
-  <div class="setting-row">
-    <label>FOCUS LETTER</label>
-    <label class="toggle-switch"><input type="checkbox" id="focus-toggle" checked/><span class="slider"></span></label>
-  </div>
-  <div class="setting-row">
-    <label>CHUNK SIZE</label>
-    <select id="chunk-select" class="setting-select">
+  <div class="stitle">Settings</div>
+  <div class="srow"><span>FOCUS LETTER</span><label class="tog"><input type="checkbox" id="focus-tog" checked/><span class="sl"></span></label></div>
+  <div class="srow"><span>CHUNK SIZE</span>
+    <select id="chunk-sel" class="ssel">
       <option value="1" selected>1 word</option>
       <option value="2">2 words</option>
       <option value="3">3 words</option>
     </select>
   </div>
-  <div class="setting-row">
-    <label>PAUSE AT PUNCT.</label>
-    <label class="toggle-switch"><input type="checkbox" id="pause-punct-toggle" checked/><span class="slider"></span></label>
-  </div>
-  <div class="setting-row">
-    <label>SIDEBAR WIDTH</label>
-    <select id="sidebar-width-select" class="setting-select">
+  <div class="srow"><span>PAUSE AT PUNCT.</span><label class="tog"><input type="checkbox" id="punct-tog" checked/><span class="sl"></span></label></div>
+  <div class="srow desk-only"><span>SIDEBAR WIDTH</span>
+    <select id="sb-width" class="ssel">
       <option value="260">Narrow</option>
-      <option value="320" selected>Medium</option>
-      <option value="420">Wide</option>
+      <option value="300" selected>Medium</option>
+      <option value="400">Wide</option>
     </select>
   </div>
 </div>
@@ -195,482 +428,433 @@ input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;hei
   <div class="drop-zone" id="drop-zone">
     <span class="drop-icon">📖</span>
     <h2>Drop your book here</h2>
-    <p>PDF or EPUB · click to browse</p>
+    <p>PDF or EPUB · tap to browse</p>
     <input type="file" id="file-input" accept=".pdf,.epub"/>
   </div>
 </div>
 
 <!-- ══ READER SCREEN ══ -->
 <div class="screen" id="reader-screen">
-  <div class="reader-body">
+  <div class="toolbar-spacer"></div>
 
-    <!-- Scrollable book sidebar -->
-    <div class="book-sidebar" id="book-sidebar">
-      <div class="sidebar-header">
-        <span class="sidebar-title" id="sidebar-title">BOOK</span>
-        <span class="sidebar-hint">SELECT TEXT → JUMP</span>
+  <div class="reader-body">
+    <!-- Sidebar (book view) -->
+    <div class="book-sidebar collapsed" id="book-sidebar">
+      <div class="sb-header">
+        <span class="sb-title" id="sb-title">BOOK</span>
+        <span class="sb-hint">SELECT TEXT → JUMP</span>
       </div>
       <div class="book-pages" id="book-pages"></div>
     </div>
 
-    <!-- Speed reader word display -->
+    <!-- Word area -->
     <div class="reader-word-area" id="word-area">
-      <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+      <div class="prog-wrap"><div class="prog-bar" id="prog-bar"></div></div>
       <div id="display-word">READY</div>
       <div class="word-counter" id="word-counter">0 / 0</div>
-      <div class="overlay-msg" id="overlay-msg">
-        <span>PAUSED</span>
-        <small>CLICK · SPACE · PLAY</small>
+      <div class="overlay" id="overlay">
+        <big>PAUSED</big>
+        <small>TAP · SPACE · PLAY</small>
       </div>
     </div>
-
   </div>
 
   <!-- Controls bar -->
   <div class="controls-bar">
-    <div class="controls-row1">
-      <div class="ctrl-group">
-        <button class="btn icon" id="restart-btn" title="Restart">⏮</button>
-        <button class="btn primary" id="play-btn">PLAY</button>
-        <button class="btn icon" id="skip-back-btn" title="-10 words">⏪</button>
-        <button class="btn icon" id="skip-fwd-btn" title="+10 words">⏩</button>
-      </div>
-      <div class="sep"></div>
-      <div class="ctrl-group">
-        <span class="ctrl-label">WPM</span>
-        <button class="btn icon" id="wpm-dec">−</button>
-        <div class="wpm-display" id="wpm-display">300</div>
-        <button class="btn icon" id="wpm-inc">+</button>
-      </div>
+
+    <!-- ── DESKTOP layout (display:contents passes children to bar flex) ── -->
+    <div class="cg desk-only" id="desk-transport">
+      <button class="btn ic" id="restart-btn">⏮</button>
+      <button class="btn primary" id="play-btn">PLAY</button>
+      <button class="btn ic" id="skip-back-btn">⏪</button>
+      <button class="btn ic" id="skip-fwd-btn">⏩</button>
     </div>
-    <div class="controls-row2">
-      <input type="range" id="wpm-slider" min="50" max="1000" step="25" value="300"/>
-      <div class="status-pill" id="status-pill">PAUSED</div>
-      <div class="ctrl-group ml-auto">
-        <button class="btn" id="close-btn">✕ CLOSE</button>
-      </div>
+    <div class="sep desk-only"></div>
+    <div class="cg desk-only">
+      <span class="clabel">WPM</span>
+      <button class="btn ic" id="wpm-dec">−</button>
+      <div class="wpm-num" id="wpm-num">300</div>
+      <button class="btn ic" id="wpm-inc">+</button>
+      <input type="range" id="wpm-range" min="50" max="1000" step="25" value="300"/>
     </div>
+    <div class="pill desk-only" id="pill">PAUSED</div>
+    <div class="cg ml desk-only">
+      <button class="btn" id="close-btn-desk">✕ CLOSE</button>
+    </div>
+
+    <!-- ── MOBILE layout (two rows, hidden on desktop) ── -->
+    <div class="mob-row1" id="mob-row1" style="display:none;">
+      <button class="btn ic" id="m-restart">⏮</button>
+      <button class="btn ic" id="m-back">⏪</button>
+      <button class="btn primary" id="m-play">PLAY</button>
+      <button class="btn ic" id="m-fwd">⏩</button>
+      <div class="sep" style="display:block;margin:0 2px;"></div>
+      <span class="clabel">WPM</span>
+      <button class="btn ic" id="m-wdec">−</button>
+      <div class="wpm-num" id="m-wnum">300</div>
+      <button class="btn ic" id="m-winc">+</button>
+    </div>
+    <div class="mob-row2" id="mob-row2" style="display:none;">
+      <input type="range" id="m-wrange" min="50" max="1000" step="25" value="300"/>
+      <div class="pill" id="m-pill">PAUSED</div>
+      <button class="btn ml" id="close-btn-mob">✕</button>
+    </div>
+
   </div>
 </div>
 
+<!-- Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 'use strict';
 const $ = id => document.getElementById(id);
 
-let words = [];
-let cursor = 0;
-let wpm = 300;
-let playing = false;
-let timer = null;
-let chunkSize = 1;
-let focusOn = true;
-let pausePunct = true;
-let isDark = true;
-let sidebarOpen = true;
+/* ── State ── */
+let words=[], cursor=0, wpm=300, playing=false, timer=null;
+let chunkSize=1, focusOn=true, pausePunct=true, isDark=true, sidebarOpen=false;
+const isMob = () => window.innerWidth <= 640;
 
-// ── Theme ──
-function applyTheme() {
-  document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
-  ['theme-btn-reader','theme-btn-upload'].forEach(id => $(id).textContent = isDark ? '☀' : '🌙');
+/* ── Mobile/Desktop toggle ── */
+function applyLayout() {
+  const mob = isMob();
+  // Show the right controls
+  document.querySelectorAll('.desk-only').forEach(el => el.style.display = mob ? 'none' : '');
+  $('mob-row1').style.display = mob ? 'flex' : 'none';
+  $('mob-row2').style.display = mob ? 'flex' : 'none';
+  // Sync WPM displays
+  syncWPM();
 }
-$('theme-btn-reader').onclick = () => { isDark = !isDark; applyTheme(); };
-$('theme-btn-upload').onclick = () => { isDark = !isDark; applyTheme(); };
+window.addEventListener('resize', applyLayout);
 
-// ── Settings ──
+/* ── Theme ── */
+function applyTheme() {
+  document.body.setAttribute('data-theme', isDark?'dark':'light');
+  ['theme-upload','theme-reader'].forEach(id=>{const el=$(id);if(el)el.textContent=isDark?'☀':'🌙';});
+}
+$('theme-upload').onclick = $('theme-reader').onclick = () => { isDark=!isDark; applyTheme(); };
+
+/* ── Settings panel ── */
 $('settings-btn').onclick = e => { e.stopPropagation(); $('settings-panel').classList.toggle('open'); };
 document.addEventListener('click', e => {
   if (!e.target.closest('#settings-panel') && !e.target.closest('#settings-btn'))
     $('settings-panel').classList.remove('open');
 });
-$('focus-toggle').onchange = e => { focusOn = e.target.checked; updateWordDisplay(); };
-$('pause-punct-toggle').onchange = e => { pausePunct = e.target.checked; };
-$('chunk-select').onchange = e => { chunkSize = +e.target.value; updateWordDisplay(); };
-$('sidebar-width-select').onchange = e => {
-  if (window.innerWidth > 700)
-    document.documentElement.style.setProperty('--sidebar', e.target.value + 'px');
+$('focus-tog').onchange = e => { focusOn=e.target.checked; updateWord(); };
+$('punct-tog').onchange = e => { pausePunct=e.target.checked; };
+$('chunk-sel').onchange = e => { chunkSize=+e.target.value; updateWord(); };
+$('sb-width').onchange = e => {
+  document.documentElement.style.setProperty('--sidebar', e.target.value+'px');
 };
 
-// ── Sidebar toggle ──
-$('sidebar-toggle-btn').onclick = () => {
-  sidebarOpen = !sidebarOpen;
-  $('book-sidebar').classList.toggle('collapsed', !sidebarOpen);
-  $('sidebar-toggle-btn').textContent = sidebarOpen ? '📖' : '📕';
-};
+/* ── Sidebar ── */
+function setSidebar(open) {
+  sidebarOpen = open;
+  $('book-sidebar').classList.toggle('collapsed', !open);
+  $('sidebar-btn').textContent = open ? '📕' : '📖';
+}
+$('sidebar-btn').onclick = () => setSidebar(!sidebarOpen);
 
-// ── Upload ──
-const dropZone = $('drop-zone');
-const fileInput = $('file-input');
+/* ── Upload ── */
+const dropZone=$('drop-zone'), fileInput=$('file-input');
 dropZone.onclick = () => fileInput.click();
 dropZone.ondragover = e => { e.preventDefault(); dropZone.classList.add('drag-over'); };
 dropZone.ondragleave = () => dropZone.classList.remove('drag-over');
-dropZone.ondrop = e => {
-  e.preventDefault(); dropZone.classList.remove('drag-over');
-  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-};
-fileInput.onchange = e => { if (e.target.files[0]) handleFile(e.target.files[0]); };
+dropZone.ondrop = e => { e.preventDefault(); dropZone.classList.remove('drag-over'); if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); };
+fileInput.onchange = e => { if(e.target.files[0]) handleFile(e.target.files[0]); };
 
-function showError(msg) {
-  const t = $('error-toast'); t.textContent = msg; t.style.display = 'block';
-  setTimeout(() => t.style.display = 'none', 4000);
-}
+function showErr(msg){ const t=$('err'); t.textContent=msg; t.style.display='block'; setTimeout(()=>t.style.display='none',4000); }
 
 async function handleFile(file) {
   const ext = file.name.split('.').pop().toLowerCase();
   dropZone.querySelector('h2').textContent = 'Processing…';
   try {
-    let text = '';
-    if (ext === 'pdf') text = await loadPDF(file);
-    else if (ext === 'epub') text = await loadEPUB(file);
-    else { showError('Only .pdf and .epub files are supported.'); dropZone.querySelector('h2').textContent = 'Drop your book here'; return; }
+    let text='';
+    if (ext==='pdf') text = await loadPDF(file);
+    else if (ext==='epub') text = await loadEPUB(file);
+    else { showErr('Only PDF or EPUB supported.'); dropZone.querySelector('h2').textContent='Drop your book here'; return; }
 
     words = tokenize(text);
-    if (words.length < 5) { showError('Could not extract text from file.'); return; }
+    if (words.length<5) { showErr('Could not extract text.'); return; }
 
-    $('sidebar-title').textContent = file.name.replace(/\.[^.]+$/, '').toUpperCase().slice(0, 26);
-    cursor = 0;
+    $('sb-title').textContent = file.name.replace(/\.[^.]+$/,'').toUpperCase().slice(0,24);
+    cursor=0;
     showScreen('reader-screen');
-    $('top-toolbar').style.display = 'flex';
-    $('upload-toolbar').style.display = 'none';
-    updateWordDisplay();
-    updateCounter();
-    showOverlay(true);
+    $('reader-toolbar').style.display='flex';
+    $('upload-toolbar').style.display='none';
+    applyLayout();
+    updateWord(); updateCounter(); showOverlay(true);
+    // On mobile, start with sidebar closed; desktop open
+    setSidebar(!isMob());
   } catch(err) {
     console.error(err);
-    showError('Failed to parse: ' + err.message);
-    dropZone.querySelector('h2').textContent = 'Drop your book here';
+    showErr('Parse error: '+err.message);
+    dropZone.querySelector('h2').textContent='Drop your book here';
   }
 }
 
-// ── PDF: render canvases per page ──
+/* ── PDF ── */
 async function loadPDF(file) {
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  const buffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
-  const container = $('book-pages');
-  container.innerHTML = '';
-  let fullText = '';
-
-  for (let i = 1; i <= pdf.numPages; i++) {
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const pdf = await pdfjsLib.getDocument({data: await file.arrayBuffer()}).promise;
+  $('book-pages').innerHTML='';
+  let full='';
+  for (let i=1;i<=pdf.numPages;i++) {
     const page = await pdf.getPage(i);
     const content = await page.getTextContent();
-    const pageText = content.items.map(s => s.str).join(' ');
-    fullText += pageText + ' ';
+    const pageText = content.items.map(s=>s.str).join(' ');
+    full += pageText+' ';
 
-    const wrap = document.createElement('div');
-    wrap.className = 'page-wrap';
-
-    const label = document.createElement('div');
-    label.className = 'page-label';
-    label.textContent = 'PAGE ' + i;
-
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    // Scale to fit sidebar width (sidebar ~320px, minus padding ~20px, scale accordingly)
-    const desiredWidth = 280;
-    const naturalVP = page.getViewport({ scale: 1 });
-    const scale = desiredWidth / naturalVP.width;
-    const viewport = page.getViewport({ scale });
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-    await page.render({ canvasContext: ctx, viewport }).promise;
-
-    wrap.appendChild(canvas);
-    wrap.appendChild(label);
-    container.appendChild(wrap);
-
-    // Attach selection handler with this page's text
-    ;(function(pt) {
-      wrap.addEventListener('mouseup', () => handleSelectionInContext(pt));
-      wrap.addEventListener('touchend', () => setTimeout(() => handleSelectionInContext(pt), 120));
+    const wrap=document.createElement('div'); wrap.className='page-wrap';
+    const label=document.createElement('div'); label.className='page-label'; label.textContent='PAGE '+i;
+    const canvas=document.createElement('canvas');
+    const ctx=canvas.getContext('2d');
+    const vp=page.getViewport({scale:1.4});
+    canvas.width=vp.width; canvas.height=vp.height;
+    await page.render({canvasContext:ctx,viewport:vp}).promise;
+    wrap.appendChild(canvas); wrap.appendChild(label);
+    $('book-pages').appendChild(wrap);
+    ;(pt=>{
+      wrap.addEventListener('mouseup',()=>handleSel(pt));
+      wrap.addEventListener('touchend',()=>setTimeout(()=>handleSel(pt),120));
     })(pageText);
   }
-
-  return fullText;
+  return full;
 }
 
-// ── EPUB: render readable text per chapter ──
+/* ── EPUB ── */
 async function loadEPUB(file) {
-  const buffer = await file.arrayBuffer();
-  const zip = await JSZip.loadAsync(buffer);
+  const zip = await JSZip.loadAsync(await file.arrayBuffer());
+  let opfPath='';
+  const cf=zip.file('META-INF/container.xml');
+  if(cf){ const xml=await cf.async('text'); const m=xml.match(/full-path="([^"]+\.opf)"/i); if(m) opfPath=m[1]; }
 
-  let opfPath = '';
-  const containerFile = zip.file('META-INF/container.xml');
-  if (containerFile) {
-    const xml = await containerFile.async('text');
-    const m = xml.match(/full-path="([^"]+\.opf)"/i);
-    if (m) opfPath = m[1];
+  let spine=[];
+  if(opfPath){
+    const opfXml=await zip.file(opfPath).async('text');
+    const parser=new DOMParser();
+    const doc=parser.parseFromString(opfXml,'application/xml');
+    const base=opfPath.includes('/')?opfPath.substring(0,opfPath.lastIndexOf('/')+1):'';
+    const mf={};
+    doc.querySelectorAll('manifest item').forEach(el=>{ mf[el.getAttribute('id')]=base+el.getAttribute('href'); });
+    doc.querySelectorAll('spine itemref').forEach(el=>{ const id=el.getAttribute('idref'); if(mf[id]) spine.push(mf[id]); });
   }
+  if(!spine.length){ zip.forEach(p=>{ if(/\.(html|xhtml|htm)$/i.test(p)) spine.push(p); }); spine.sort(); }
 
-  let spineFiles = [];
-  if (opfPath) {
-    const opfXml = await zip.file(opfPath).async('text');
-    const parser = new DOMParser();
-    const opfDoc = parser.parseFromString(opfXml, 'application/xml');
-    const base = opfPath.includes('/') ? opfPath.substring(0, opfPath.lastIndexOf('/') + 1) : '';
-    const manifest = {};
-    opfDoc.querySelectorAll('manifest item').forEach(el => {
-      manifest[el.getAttribute('id')] = base + el.getAttribute('href');
-    });
-    opfDoc.querySelectorAll('spine itemref').forEach(el => {
-      const id = el.getAttribute('idref');
-      if (manifest[id]) spineFiles.push(manifest[id]);
-    });
+  $('book-pages').innerHTML='';
+  let full='';
+  for(let si=0;si<spine.length;si++){
+    const f=zip.file(spine[si]); if(!f) continue;
+    const html=await f.async('text');
+    const tmp=document.createElement('div'); tmp.innerHTML=html;
+    tmp.querySelectorAll('script,style,nav').forEach(n=>n.remove());
+    const ct=(tmp.textContent||tmp.innerText).replace(/\s+/g,' ').trim();
+    full+=ct+' ';
+
+    const wrap=document.createElement('div'); wrap.className='page-wrap'; wrap.style.background='var(--surface2)';
+    const label=document.createElement('div'); label.className='page-label'; label.textContent='CHAPTER '+(si+1);
+    const td=document.createElement('div'); td.className='epub-text';
+    ct.split(/(?<=[.!?])\s{2,}|\n\n+/).filter(p=>p.trim().length>2).forEach(p=>{ const el=document.createElement('p'); el.textContent=p.trim(); td.appendChild(el); });
+    if(!td.children.length){ const p=document.createElement('p'); p.textContent=ct; td.appendChild(p); }
+    wrap.appendChild(label); wrap.appendChild(td);
+    $('book-pages').appendChild(wrap);
+    ;(ct2=>{
+      wrap.addEventListener('mouseup',()=>handleSel(ct2));
+      wrap.addEventListener('touchend',()=>setTimeout(()=>handleSel(ct2),120));
+    })(ct);
   }
-  if (!spineFiles.length) {
-    zip.forEach(path => { if (/\.(html|xhtml|htm)$/i.test(path)) spineFiles.push(path); });
-    spineFiles.sort();
-  }
-
-  const container = $('book-pages');
-  container.innerHTML = '';
-  let fullText = '';
-
-  for (let si = 0; si < spineFiles.length; si++) {
-    const f = zip.file(spineFiles[si]);
-    if (!f) continue;
-    const html = await f.async('text');
-    const tmp = document.createElement('div');
-    tmp.innerHTML = html;
-    tmp.querySelectorAll('script,style,nav').forEach(n => n.remove());
-    const chapterText = (tmp.textContent || tmp.innerText).replace(/\s+/g, ' ').trim();
-    fullText += chapterText + ' ';
-
-    const wrap = document.createElement('div');
-    wrap.className = 'page-wrap';
-    wrap.style.background = 'var(--surface2)';
-
-    const label = document.createElement('div');
-    label.className = 'page-label';
-    label.textContent = 'CHAPTER ' + (si + 1);
-
-    const textDiv = document.createElement('div');
-    textDiv.className = 'epub-text';
-
-    // Split into readable paragraphs
-    const paras = chapterText.split(/(?<=[.!?])\s{2,}|\n\n+/).filter(p => p.trim().length > 2);
-    if (paras.length > 0) {
-      paras.forEach(para => {
-        const p = document.createElement('p');
-        p.textContent = para.trim();
-        textDiv.appendChild(p);
-      });
-    } else {
-      const p = document.createElement('p');
-      p.textContent = chapterText;
-      textDiv.appendChild(p);
-    }
-
-    wrap.appendChild(label);
-    wrap.appendChild(textDiv);
-    container.appendChild(wrap);
-
-    ;(function(ct) {
-      wrap.addEventListener('mouseup', () => handleSelectionInContext(ct));
-      wrap.addEventListener('touchend', () => setTimeout(() => handleSelectionInContext(ct), 120));
-    })(chapterText);
-  }
-
-  return fullText;
+  return full;
 }
 
-// ── Selection & Jump ──
-const jumpTooltip = $('jump-tooltip');
-let pendingJumpCursor = -1;
+/* ── Selection jump ── */
+const jumpTip=$('jump-tip');
+let pendingJump=-1;
 
-function handleSelectionInContext(contextText) {
-  const sel = window.getSelection();
-  if (!sel || sel.isCollapsed) { jumpTooltip.style.display = 'none'; return; }
-  const selectedText = sel.toString().trim();
-  if (!selectedText) { jumpTooltip.style.display = 'none'; return; }
-
-  const selectedWords = tokenize(selectedText);
-  if (!selectedWords.length) return;
-  const firstWord = selectedWords[0];
-
-  // Find where this context block starts in our global words array
-  const contextWords = tokenize(contextText);
-  const blockStart = findBlockStart(contextWords);
-
-  // Then find the selected first word starting from blockStart
-  const idx = findWordFrom(firstWord, blockStart);
-
-  if (idx === -1) {
-    jumpTooltip.style.display = 'none';
-    return;
-  }
-  pendingJumpCursor = idx;
-
-  // Position tooltip above selection
-  const range = sel.getRangeAt(0);
-  const rect = range.getBoundingClientRect();
-  const tooltipLeft = Math.max(60, Math.min(rect.left + rect.width / 2, window.innerWidth - 60));
-  jumpTooltip.style.left = tooltipLeft + 'px';
-  jumpTooltip.style.top = (rect.top + window.scrollY - 48) + 'px';
-  jumpTooltip.style.display = 'block';
+function handleSel(ctxText) {
+  const sel=window.getSelection();
+  if(!sel||sel.isCollapsed){jumpTip.style.display='none';return;}
+  const txt=sel.toString().trim(); if(!txt){jumpTip.style.display='none';return;}
+  const fw=tokenize(txt)[0]; if(!fw) return;
+  const ctxWords=tokenize(ctxText);
+  const blockStart=findBlockStart(ctxWords);
+  const idx=findWordFrom(fw,blockStart);
+  if(idx===-1){jumpTip.style.display='none';return;}
+  pendingJump=idx;
+  const range=sel.getRangeAt(0);
+  const rect=range.getBoundingClientRect();
+  const left=Math.max(70,Math.min(rect.left+rect.width/2,window.innerWidth-70));
+  jumpTip.style.left=left+'px';
+  jumpTip.style.top=(rect.top-46)+'px';
+  jumpTip.style.display='block';
 }
 
-// Find where a block of text starts in our global words array
-function findBlockStart(blockWords) {
-  if (!blockWords.length) return 0;
-  const target0 = normalize(blockWords[0]);
-  const target1 = blockWords[1] ? normalize(blockWords[1]) : null;
-  for (let i = 0; i < words.length; i++) {
-    if (normalize(words[i]) === target0) {
-      if (!target1 || (i + 1 < words.length && normalize(words[i+1]) === target1)) {
-        return i;
-      }
+function findBlockStart(bw){
+  if(!bw.length) return 0;
+  const t0=norm(bw[0]), t1=bw[1]?norm(bw[1]):null;
+  for(let i=0;i<words.length;i++){
+    if(norm(words[i])===t0){
+      if(!t1||(i+1<words.length&&norm(words[i+1])===t1)) return i;
     }
   }
   return 0;
 }
-
-// Find first occurrence of word at or after startIdx, with global fallback
-function findWordFrom(word, startIdx) {
-  const w = normalize(word);
-  for (let i = startIdx; i < words.length; i++) {
-    if (normalize(words[i]) === w) return i;
-  }
-  for (let i = 0; i < startIdx; i++) {
-    if (normalize(words[i]) === w) return i;
-  }
+function findWordFrom(word,from){
+  const w=norm(word);
+  for(let i=from;i<words.length;i++) if(norm(words[i])===w) return i;
+  for(let i=0;i<from;i++) if(norm(words[i])===w) return i;
   return -1;
 }
+function norm(w){return w.toLowerCase().replace(/[^a-z0-9]/g,'');}
 
-function normalize(w) { return w.toLowerCase().replace(/[^a-z0-9]/g, ''); }
-
-jumpTooltip.onclick = () => {
-  if (pendingJumpCursor >= 0) {
-    pause();
-    cursor = pendingJumpCursor;
-    updateWordDisplay();
-    updateCounter();
+jumpTip.onclick=()=>{
+  if(pendingJump>=0){
+    pause(); cursor=pendingJump; updateWord(); updateCounter();
     window.getSelection()?.removeAllRanges();
-    jumpTooltip.style.display = 'none';
-    pendingJumpCursor = -1;
-    setTimeout(play, 150);
+    jumpTip.style.display='none'; pendingJump=-1;
+    // Close sidebar on mobile after jump
+    if(isMob()) setSidebar(false);
+    setTimeout(play,150);
   }
 };
+document.addEventListener('mousedown',e=>{ if(!e.target.closest('#jump-tip')) jumpTip.style.display='none'; });
 
-document.addEventListener('mousedown', e => {
-  if (!e.target.closest('#jump-tooltip')) jumpTooltip.style.display = 'none';
-});
+/* ── Helpers ── */
+function tokenize(t){ return t.replace(/\s+/g,' ').trim().split(' ').map(w=>w.trim()).filter(w=>w.length>0); }
+function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); $(id).classList.add('active'); }
 
-// ── Tokenise ──
-function tokenize(text) {
-  return text.replace(/\s+/g,' ').trim().split(' ').map(w=>w.trim()).filter(w=>w.length>0);
-}
-
-// ── Screen switch ──
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  $(id).classList.add('active');
-}
-
-// ── Word display ──
-function updateWordDisplay() {
-  const chunk = words.slice(cursor, cursor + chunkSize).join(' ');
-  const el = $('display-word');
-  if (focusOn && chunkSize === 1 && chunk.length > 1) {
-    const idx = Math.floor(chunk.replace(/[^a-zA-Z]/g,'').length * 0.33);
-    let letterCount = 0, html = '', highlighted = false;
-    for (let c of chunk) {
-      if (!highlighted && /[a-zA-Z]/.test(c)) {
-        if (letterCount === idx) { html += `<span class="focus-letter">${c}</span>`; highlighted = true; letterCount++; continue; }
-        letterCount++;
+/* ── Word display ── */
+function updateWord(){
+  const chunk=words.slice(cursor,cursor+chunkSize).join(' ');
+  const el=$('display-word');
+  if(focusOn&&chunkSize===1&&chunk.length>1){
+    const idx=Math.floor(chunk.replace(/[^a-zA-Z]/g,'').length*0.33);
+    let lc=0,html='',done=false;
+    for(let c of chunk){
+      if(!done&&/[a-zA-Z]/.test(c)){
+        if(lc===idx){html+=`<span class="fl">${c}</span>`;done=true;lc++;continue;}
+        lc++;
       }
-      html += c;
+      html+=c;
     }
-    el.innerHTML = html;
-  } else {
-    el.textContent = chunk || '—';
+    el.innerHTML=html;
+  } else { el.textContent=chunk||'—'; }
+}
+
+function updateCounter(){
+  $('word-counter').textContent=`${cursor+1} / ${words.length}`;
+  const pct=words.length>1?(cursor/(words.length-1))*100:0;
+  $('prog-bar').style.width=pct+'%';
+}
+
+function showOverlay(show){ $('overlay').classList.toggle('show',show); }
+
+/* ── Playback ── */
+function getDelay(){
+  const base=60000/wpm;
+  if(pausePunct){
+    const chunk=words.slice(cursor,cursor+chunkSize).join(' ');
+    if(/[.!?]$/.test(chunk)) return base*3.5;
+    if(/[,;:]$/.test(chunk)) return base*1.8;
   }
+  return base*chunkSize;
 }
 
-function updateCounter() {
-  $('word-counter').textContent = `${cursor + 1} / ${words.length}`;
-  const pct = words.length > 1 ? (cursor / (words.length - 1)) * 100 : 0;
-  $('progress-bar').style.width = pct + '%';
+function tick(){
+  if(cursor>=words.length){pause();$('display-word').textContent='DONE';showOverlay(false);return;}
+  updateWord();updateCounter();
+  cursor+=chunkSize;
+  timer=setTimeout(tick,getDelay());
 }
 
-function showOverlay(show) { $('overlay-msg').classList.toggle('visible', show); }
-
-// ── Playback ──
-function getDelay() {
-  const base = 60000 / wpm;
-  if (pausePunct) {
-    const chunk = words.slice(cursor, cursor + chunkSize).join(' ');
-    if (/[.!?]$/.test(chunk)) return base * 3.5;
-    if (/[,;:]$/.test(chunk)) return base * 1.8;
-  }
-  return base * chunkSize;
-}
-
-function tick() {
-  if (cursor >= words.length) { pause(); $('display-word').textContent = 'DONE'; showOverlay(false); return; }
-  updateWordDisplay(); updateCounter();
-  cursor += chunkSize;
-  timer = setTimeout(tick, getDelay());
-}
-
-function play() {
-  if (playing) return;
-  if (cursor >= words.length) cursor = 0;
-  playing = true;
-  $('play-btn').textContent = 'PAUSE';
-  $('status-pill').textContent = 'PLAYING';
-  $('status-pill').classList.add('playing');
+function play(){
+  if(playing) return;
+  if(cursor>=words.length) cursor=0;
+  playing=true;
+  setPlayState(true);
   showOverlay(false);
   tick();
 }
 
-function pause() {
-  playing = false; clearTimeout(timer);
-  $('play-btn').textContent = 'PLAY';
-  $('status-pill').textContent = 'PAUSED';
-  $('status-pill').classList.remove('playing');
+function pause(){
+  playing=false;clearTimeout(timer);
+  setPlayState(false);
   showOverlay(true);
 }
 
-function togglePlay() { playing ? pause() : play(); }
-
-// ── Controls ──
-$('play-btn').onclick = togglePlay;
-$('restart-btn').onclick = () => { pause(); cursor = 0; updateWordDisplay(); updateCounter(); };
-$('skip-back-btn').onclick = () => { cursor = Math.max(0, cursor-10); if(!playing){updateWordDisplay();updateCounter();} };
-$('skip-fwd-btn').onclick = () => { cursor = Math.min(words.length-1, cursor+10); if(!playing){updateWordDisplay();updateCounter();} };
-$('word-area').onclick = e => { if(e.target.closest('.progress-bar-wrap')) return; togglePlay(); };
-
-function setWPM(v) {
-  wpm = Math.max(50, Math.min(1000, v));
-  $('wpm-display').textContent = wpm;
-  $('wpm-slider').value = wpm;
+function setPlayState(on){
+  const label=on?'PAUSE':'PLAY';
+  const pillLabel=on?'PLAYING':'PAUSED';
+  $('play-btn').textContent=label;
+  $('m-play').textContent=label;
+  $('pill').textContent=pillLabel; $('pill').classList.toggle('on',on);
+  $('m-pill').textContent=pillLabel; $('m-pill').classList.toggle('on',on);
 }
-$('wpm-dec').onclick = () => setWPM(wpm-25);
-$('wpm-inc').onclick = () => setWPM(wpm+25);
-$('wpm-slider').oninput = e => setWPM(+e.target.value);
 
-document.addEventListener('keydown', e => {
-  if ($('reader-screen').classList.contains('active')) {
-    if (e.code === 'Space') { e.preventDefault(); togglePlay(); }
-    if (e.code === 'ArrowRight') $('skip-fwd-btn').click();
-    if (e.code === 'ArrowLeft') $('skip-back-btn').click();
-    if (e.code === 'ArrowUp') setWPM(wpm+25);
-    if (e.code === 'ArrowDown') setWPM(wpm-25);
+function togglePlay(){ playing?pause():play(); }
+
+/* ── WPM ── */
+function syncWPM(){
+  $('wpm-num').textContent=wpm; $('wpm-range').value=wpm;
+  $('m-wnum').textContent=wpm; $('m-wrange').value=wpm;
+}
+function setWPM(v){
+  wpm=Math.max(50,Math.min(1000,v));
+  syncWPM();
+}
+
+/* ── Desktop controls ── */
+$('play-btn').onclick=togglePlay;
+$('restart-btn').onclick=()=>{pause();cursor=0;updateWord();updateCounter();};
+$('skip-back-btn').onclick=()=>{cursor=Math.max(0,cursor-10);if(!playing){updateWord();updateCounter();}};
+$('skip-fwd-btn').onclick=()=>{cursor=Math.min(words.length-1,cursor+10);if(!playing){updateWord();updateCounter();}};
+$('wpm-dec').onclick=()=>setWPM(wpm-25);
+$('wpm-inc').onclick=()=>setWPM(wpm+25);
+$('wpm-range').oninput=e=>setWPM(+e.target.value);
+$('close-btn-desk').onclick=closeReader;
+
+/* ── Mobile controls ── */
+$('m-play').onclick=togglePlay;
+$('m-restart').onclick=()=>{pause();cursor=0;updateWord();updateCounter();};
+$('m-back').onclick=()=>{cursor=Math.max(0,cursor-10);if(!playing){updateWord();updateCounter();}};
+$('m-fwd').onclick=()=>{cursor=Math.min(words.length-1,cursor+10);if(!playing){updateWord();updateCounter();}};
+$('m-wdec').onclick=()=>setWPM(wpm-25);
+$('m-winc').onclick=()=>setWPM(wpm+25);
+$('m-wrange').oninput=e=>setWPM(+e.target.value);
+$('close-btn-mob').onclick=closeReader;
+
+/* ── Word area click ── */
+$('word-area').onclick=e=>{
+  if(e.target.closest('.prog-wrap')) return;
+  // On mobile, don't toggle if sidebar is open
+  if(isMob()&&sidebarOpen){setSidebar(false);return;}
+  togglePlay();
+};
+
+/* ── Keyboard ── */
+document.addEventListener('keydown',e=>{
+  if($('reader-screen').classList.contains('active')){
+    if(e.code==='Space'){e.preventDefault();togglePlay();}
+    if(e.code==='ArrowRight') cursor=Math.min(words.length-1,cursor+10),updateWord(),updateCounter();
+    if(e.code==='ArrowLeft') cursor=Math.max(0,cursor-10),updateWord(),updateCounter();
+    if(e.code==='ArrowUp') setWPM(wpm+25);
+    if(e.code==='ArrowDown') setWPM(wpm-25);
   }
 });
 
-$('close-btn').onclick = () => {
-  pause(); words = []; cursor = 0;
-  $('book-pages').innerHTML = '';
-  fileInput.value = '';
-  dropZone.querySelector('h2').textContent = 'Drop your book here';
-  $('top-toolbar').style.display = 'none';
-  $('upload-toolbar').style.display = 'flex';
+/* ── Close ── */
+function closeReader(){
+  pause(); words=[]; cursor=0;
+  $('book-pages').innerHTML='';
+  fileInput.value='';
+  dropZone.querySelector('h2').textContent='Drop your book here';
+  $('reader-toolbar').style.display='none';
+  $('upload-toolbar').style.display='flex';
+  setSidebar(false);
   showScreen('upload-screen');
-};
+}
+
+/* ── Init ── */
+applyLayout();
 </script>
 </body>
 </html>
